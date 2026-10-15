@@ -78,7 +78,7 @@ class Settings internal constructor(private val store: SettingsStore) {
     constructor(ctx: Context) : this(SharedPreferencesSettingsStore(encryptedPreferences(ctx)))
 
     var theme: String
-        get() = store.getString("theme", "amoled")
+        get() = store.getString("theme", "retro_1995")
         set(value) = store.putString("theme", value)
 
     var layout: String

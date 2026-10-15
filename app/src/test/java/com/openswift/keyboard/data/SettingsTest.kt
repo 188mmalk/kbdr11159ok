@@ -11,7 +11,7 @@ class SettingsTest {
     fun defaultsMatchKeyboardBehavior() {
         val settings = Settings(MutableMapSettingsStore())
 
-        assertEquals("amoled", settings.theme)
+        assertEquals("retro_1995", settings.theme)
         assertEquals("qwerty", settings.layout)
         assertEquals("en", settings.language)
         assertTrue(settings.glideEnabled)

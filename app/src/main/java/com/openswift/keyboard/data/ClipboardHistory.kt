@@ -185,7 +185,30 @@ class ClipboardHistory internal constructor(private val prefs: android.content.S
         clearPinned()
     }
 
-    internal fun savePinned(list: List<String>) {
+    fun reorderPinned(fromIndex: Int, toIndex: Int): Boolean {
+        val current = pinnedItems().toMutableList()
+        if (fromIndex !in current.indices || toIndex !in current.indices || fromIndex == toIndex) {
+            return false
+        }
+        val item = current.removeAt(fromIndex)
+        current.add(toIndex, item)
+        savePinned(current)
+        return true
+    }
+
+    fun movePinned(text: String, targetIndex: Int): Boolean {
+        val current = pinnedItems().toMutableList()
+        val fromIndex = current.indexOf(text)
+        if (fromIndex == -1 || targetIndex !in current.indices || fromIndex == targetIndex) {
+            return false
+        }
+        val item = current.removeAt(fromIndex)
+        current.add(targetIndex, item)
+        savePinned(current)
+        return true
+    }
+
+    fun savePinned(list: List<String>) {
         cachedPinnedItems = list
         cachedPinnedSet = list.toHashSet()
         val arr = JSONArray()

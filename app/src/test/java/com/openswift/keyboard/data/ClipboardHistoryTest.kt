@@ -161,4 +161,57 @@ class ClipboardHistoryTest {
         assertFalse(captured)
         assertTrue(history.items().isEmpty())
     }
+
+    @Test
+    fun reorderingPinnedItemsPersistsCorrectly() {
+        val context = org.robolectric.RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("test_reorder_pinned", android.content.Context.MODE_PRIVATE)
+        prefs.edit().clear().commit()
+        val history = ClipboardHistory(prefs)
+
+        history.pin("Item A")
+        history.pin("Item B")
+        history.pin("Item C")
+        // pin adds to beginning, so list is ["Item C", "Item B", "Item A"]
+        assertEquals(listOf("Item C", "Item B", "Item A"), history.pinnedItems())
+
+        // Move "Item C" from index 0 to index 2 (downwards)
+        val success = history.reorderPinned(0, 2)
+        assertTrue(success)
+        assertEquals(listOf("Item B", "Item A", "Item C"), history.pinnedItems())
+
+        // Move "Item A" to index 0 (to the other side/upwards)
+        val moveSuccess = history.movePinned("Item A", 0)
+        assertTrue(moveSuccess)
+        assertEquals(listOf("Item A", "Item B", "Item C"), history.pinnedItems())
+    }
+
+    @Test
+    fun copyingPinnedItemAppearsInRecentItemsWhileRemainingPinned() {
+        val context = org.robolectric.RuntimeEnvironment.getApplication()
+        val prefs = context.getSharedPreferences("test_pinned_recopy", android.content.Context.MODE_PRIVATE)
+        prefs.edit().clear().commit()
+        val history = ClipboardHistory(prefs)
+
+        // User pins an item
+        history.pin("مهم جداً")
+        assertTrue(history.isPinned("مهم جداً"))
+        assertEquals(listOf("مهم جداً"), history.pinnedItems())
+        assertTrue(history.items().isEmpty())
+
+        // User copies this pinned text again
+        val added = history.add("مهم جداً")
+        assertTrue(added)
+
+        // It is now present in recent items (items) and STILL in pinned items
+        assertEquals(listOf("مهم جداً"), history.items())
+        assertEquals(listOf("مهم جداً"), history.pinnedItems())
+        assertTrue(history.isPinned("مهم جداً"))
+
+        // Removing the recent copy does not remove it from pinned items
+        history.remove("مهم جداً")
+        assertTrue(history.items().isEmpty())
+        assertEquals(listOf("مهم جداً"), history.pinnedItems())
+    }
 }
+

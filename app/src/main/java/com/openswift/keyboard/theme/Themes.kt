@@ -16,9 +16,9 @@ data class KbTheme(
 ) {
     val displayName: String
         get() = when (id) {
-            "amoled" -> "أسود AMOLED (الحالي)"
+            "amoled" -> "أسود ليلي مريح للعين 3D (AMOLED)"
             "honey_3d" -> "عسلي ثلاثي الأبعاد 3D"
-            "retro_1995" -> "كلاسيك 1995 ثريدي"
+            "retro_1995" -> "كمبيوتر 1995 الكلاسيكي 3D (IBM البيج)"
             "ios_style" -> "نمط آيفون ثريدي (iOS)"
             "mocha" -> "كاتبوشين موكا"
             "github_dark" -> "جيت هب داكن"
@@ -42,15 +42,15 @@ object Themes {
 
     val Amoled = KbTheme(
         id = "amoled",
-        name = "Cyan Slate",
-        background = KbTheme.rgb(0x05, 0x0B, 0x14),
-        keyBackground = KbTheme.rgb(0x18, 0x26, 0x3A),
-        keyModifierBackground = KbTheme.rgb(0x12, 0x1C, 0x2B),
-        keyText = KbTheme.rgb(0xFF, 0xFF, 0xFF),
-        keyAccent = KbTheme.rgb(0x00, 0xE5, 0xFF),
-        suggestionBg = KbTheme.rgb(0x05, 0x0B, 0x14),
-        suggestionText = KbTheme.rgb(0xFF, 0xFF, 0xFF),
-        gestureTrail = KbTheme.rgb(0x00, 0xE5, 0xFF)
+        name = "Dark Eye Care 3D",
+        background = KbTheme.rgb(0x0C, 0x0F, 0x14),
+        keyBackground = KbTheme.rgb(0x1B, 0x22, 0x2D),
+        keyModifierBackground = KbTheme.rgb(0x14, 0x19, 0x22),
+        keyText = KbTheme.rgb(0xEA, 0xEE, 0xF4),
+        keyAccent = KbTheme.rgb(0x02, 0x84, 0xC7),
+        suggestionBg = KbTheme.rgb(0x0C, 0x0F, 0x14),
+        suggestionText = KbTheme.rgb(0xEA, 0xEE, 0xF4),
+        gestureTrail = KbTheme.rgb(0x02, 0x84, 0xC7)
     )
 
     val Honey3D = KbTheme(
@@ -68,15 +68,15 @@ object Themes {
 
     val Retro1995 = KbTheme(
         id = "retro_1995",
-        name = "Classic 1995 (Win95/IBM)",
-        background = KbTheme.rgb(0xC3, 0xC7, 0xCB),
-        keyBackground = KbTheme.rgb(0xEC, 0xE9, 0xD8),
-        keyModifierBackground = KbTheme.rgb(0xD4, 0xD0, 0xC8),
-        keyText = KbTheme.rgb(0x11, 0x11, 0x11),
-        keyAccent = KbTheme.rgb(0x00, 0x00, 0x80),
-        suggestionBg = KbTheme.rgb(0xC3, 0xC7, 0xCB),
-        suggestionText = KbTheme.rgb(0x11, 0x11, 0x11),
-        gestureTrail = KbTheme.rgb(0x00, 0x00, 0x80)
+        name = "IBM Classic 1995 Beige 3D",
+        background = KbTheme.rgb(0xBF, 0xBA, 0xAC),
+        keyBackground = KbTheme.rgb(0xE6, 0xE2, 0xD4),
+        keyModifierBackground = KbTheme.rgb(0xBE, 0xB9, 0xAB),
+        keyText = KbTheme.rgb(0x14, 0x14, 0x14),
+        keyAccent = KbTheme.rgb(0x0A, 0x24, 0x6A),
+        suggestionBg = KbTheme.rgb(0xBF, 0xBA, 0xAC),
+        suggestionText = KbTheme.rgb(0x14, 0x14, 0x14),
+        gestureTrail = KbTheme.rgb(0x0A, 0x24, 0x6A)
     )
 
     val IosStyle = KbTheme(

@@ -25,36 +25,36 @@ fun KeyboardPreview(
 ) {
     val bgColor = when (theme.id) {
         "honey_3d" -> Color(0xFF6B4318)
-        "retro_1995" -> Color(0xFFECE9D8)
+        "retro_1995" -> Color(0xFFE6E2D4)
         "ios_style" -> Color(0xFFFFFFFF)
-        "amoled" -> Color(0xFF18263A)
+        "amoled" -> Color(0xFF1B222D)
         else -> Color(theme.keyBackground)
     }
     val modifierBg = when (theme.id) {
         "honey_3d" -> Color(0xFF4A2B0E)
-        "retro_1995" -> Color(0xFFD4D0C8)
+        "retro_1995" -> Color(0xFFBEB9AB)
         "ios_style" -> Color(0xFFB0B6C2)
-        "amoled" -> Color(0xFF121C2B)
+        "amoled" -> Color(0xFF141922)
         else -> Color(theme.keyModifierBackground)
     }
     val textColor = when (theme.id) {
         "honey_3d" -> Color(0xFFFFF6DF)
-        "retro_1995" -> Color(0xFF111111)
+        "retro_1995" -> Color(0xFF141414)
         "ios_style" -> Color(0xFF000000)
-        "amoled" -> Color(0xFFFFFFFF)
+        "amoled" -> Color(0xFFEAEEF4)
         else -> Color(theme.keyText)
     }
-    val toolbarIconTint = if (theme.id == "retro_1995" || theme.id == "ios_style") textColor else Color.White
+    val toolbarIconTint = if (theme.id == "retro_1995" || theme.id == "ios_style") textColor else Color(0xFFEAEEF4)
     val accentColor = Color(theme.keyAccent)
     val subtleColor = Color(theme.suggestionText)
     val keySpacing = 3.dp
     val keyHeight = 38.dp
     val containerBg = Color(theme.background)
     val toolbarBg = when (theme.id) {
-        "retro_1995" -> Color(0xFFB4B0A2)
+        "retro_1995" -> Color(0xFFBFBAAC)
         "ios_style" -> Color(0xFFC0C5CF)
         "honey_3d" -> Color(0xFF140B04)
-        else -> Color(0xFF050B14)
+        else -> Color(0xFF0C0F14)
     }
     
     Column(
@@ -374,37 +374,46 @@ fun PreviewKey(
     isPill: Boolean = false,
     realisticKeys: Boolean = true
 ) {
-    val cornerRadius = if (isPill) 20.dp else 10.dp
+    val cornerRadius = if (isPill) 20.dp else 9.dp
     val isEnter = (label == "↵")
+    val isRetro = (bgColor == Color(0xFFE6E2D4))
     
     val effectiveBaseColor = when {
         !realisticKeys -> Color.Transparent
-        isEnter -> Color(0xFF6D28D9)
-        isModifier -> Color(0xFFCBD5E1)
-        else -> Color(0xFFD0D5E0)
+        isRetro && isEnter -> Color(0xFF051336)
+        isRetro && isModifier -> Color(0xFF6B665A)
+        isRetro -> Color(0xFF8F8A7D)
+        isEnter -> Color(0xFF0369A1)
+        isModifier -> Color(0xFF080B0F)
+        else -> Color(0xFF0B0E14)
     }
     
     val effectiveFaceColor = when {
         !realisticKeys -> bgColor
-        isEnter -> Color(0xFF8B5CF6)
-        isModifier -> Color(0xFFF1F5F9)
-        else -> Color.White
+        isRetro && isEnter -> Color(0xFF0A246A)
+        isRetro && isModifier -> Color(0xFFBEB9AB)
+        isRetro -> Color(0xFFE6E2D4)
+        isEnter -> Color(0xFF0284C7)
+        isModifier -> Color(0xFF141922)
+        else -> Color(0xFF1B222D)
     }
     
     val effectiveTextColor = when {
         !realisticKeys -> textColor
         isEnter -> Color.White
-        else -> Color(0xFF0F172A)
+        isRetro -> Color(0xFF141414)
+        else -> Color(0xFFEAEEF4)
     }
+    val effectiveBorderColor = if (isRetro) Color(0x667A7569) else if (realisticKeys) Color(0x3D38BDF8) else Color(0x22FFFFFF)
 
     if (realisticKeys) {
         Box(
             modifier = modifier
                 .height(height)
                 .background(effectiveBaseColor, RoundedCornerShape(cornerRadius))
-                .padding(bottom = 2.2.dp)
+                .padding(bottom = 3.8.dp)
                 .background(effectiveFaceColor, RoundedCornerShape(cornerRadius))
-                .border(0.6.dp, Color(0x18000000), RoundedCornerShape(cornerRadius)),
+                .border(1.dp, effectiveBorderColor, RoundedCornerShape(cornerRadius)),
             contentAlignment = Alignment.Center
         ) {
             val hiddenHints = setOf("é", "ý", "ú", "í", "ł", "á", "ß", "đ", "ž", "ç", "ñ")
@@ -414,14 +423,14 @@ fun PreviewKey(
                     painter = painterResource(R.drawable.ic_backspace),
                     contentDescription = "Delete",
                     tint = effectiveTextColor,
-                    modifier = Modifier.size(19.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             } else if (label == "↵") {
                 Icon(
                     painter = painterResource(R.drawable.ic_keyboard_return),
                     contentDescription = "Enter",
                     tint = effectiveTextColor,
-                    modifier = Modifier.size(19.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             } else if (effectiveHint != null) {
                 Column(
@@ -432,7 +441,7 @@ fun PreviewKey(
                     Text(
                         label,
                         color = effectiveTextColor,
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1
                     )
@@ -448,7 +457,7 @@ fun PreviewKey(
                 Text(
                     label,
                     color = effectiveTextColor,
-                    fontSize = if (label.length > 2) 11.sp else if (isArabic) 15.sp else 14.sp,
+                    fontSize = if (label.length > 2) 12.sp else if (isArabic) 18.sp else 16.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
                 )

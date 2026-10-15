@@ -18,6 +18,7 @@ import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
 import com.openswift.keyboard.R
 import com.openswift.keyboard.data.ClipboardHistory
+import com.openswift.keyboard.theme.Themes
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -185,6 +186,47 @@ class ClipboardView @JvmOverloads constructor(
         isFakeBoldText = true
     }
 
+    // Drag & Reorder state for pinned items
+    private var isDraggingPinned = false
+    private var draggedCard: ClipCard? = null
+    private var dragTouchX = 0f
+    private var dragTouchY = 0f
+    private var dragTargetIndex = -1
+    private var hasMovedSignificantly = false
+
+    private val dragShadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x88000000.toInt()
+        style = Paint.Style.FILL
+    }
+    private val dragCardBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF263238.toInt()
+        style = Paint.Style.FILL
+    }
+    private val dragBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF00E5FF.toInt()
+        style = Paint.Style.STROKE
+        strokeWidth = 2.5f * density
+    }
+    private val dragSourceSlotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x22FFFFFF
+        style = Paint.Style.FILL
+    }
+    private val dragTargetSlotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF00E5FF.toInt()
+        style = Paint.Style.STROKE
+        strokeWidth = 2.5f * density
+    }
+    private val dragBadgeBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xEE1E293B.toInt()
+        style = Paint.Style.FILL
+    }
+    private val dragBadgeTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        textSize = 10.5f * density
+        color = 0xFF00E5FF.toInt()
+        isFakeBoldText = true
+    }
+
     // Drawables
     private val hubIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_hub_monogram)?.mutate()?.apply {
         setTint(0xFF8E95A5.toInt())
@@ -215,7 +257,8 @@ class ClipboardView @JvmOverloads constructor(
     private data class ClipCard(
         val text: String,
         val isPinned: Boolean,
-        val bounds: RectF
+        val bounds: RectF,
+        val pinnedIndex: Int = -1
     )
 
     private val layoutCards = ArrayList<ClipCard>()
@@ -252,7 +295,7 @@ class ClipboardView @JvmOverloads constructor(
         }
     }
 
-    // Long press detection for deleting
+    // Long press detection for deleting / reordering
     private val longPressHandler = Handler(Looper.getMainLooper())
     private var pressedCard: ClipCard? = null
     private var longPressTriggered = false
@@ -260,10 +303,21 @@ class ClipboardView @JvmOverloads constructor(
     private val longPressRunnable = Runnable {
         pressedCard?.let { card ->
             longPressTriggered = true
-            ignoreNextUpForDialog = true
             vibrateFeedback()
-            activeDialogCard = card
-            invalidate()
+            if (card.isPinned) {
+                // Enter drag & drop reorder mode for pinned items!
+                isDraggingPinned = true
+                draggedCard = card
+                dragTouchX = downX
+                dragTouchY = downY
+                hasMovedSignificantly = false
+                dragTargetIndex = card.pinnedIndex
+                invalidate()
+            } else {
+                ignoreNextUpForDialog = true
+                activeDialogCard = card
+                invalidate()
+            }
         }
     }
 
@@ -277,6 +331,10 @@ class ClipboardView @JvmOverloads constructor(
         activeDialogCard = null
         pressedCard = null
         swipedCard = null
+        isDraggingPinned = false
+        draggedCard = null
+        dragTargetIndex = -1
+        hasMovedSignificantly = false
     }
 
     fun refresh(resetScrollPosition: Boolean = true) {
@@ -342,8 +400,7 @@ class ClipboardView @JvmOverloads constructor(
         layoutCards.clear()
 
         val pinnedItems = clipboard.pinnedItems()
-        val pinnedSet = clipboard.pinnedSet()
-        val recentItems = clipboard.items().filter { it !in pinnedSet }
+        val recentItems = clipboard.items()
 
         if (recentItems.isEmpty() && pinnedItems.isEmpty()) {
             val emptyCenterY = (h - toolbarHeight) / 2f + toolbarHeight
@@ -358,7 +415,7 @@ class ClipboardView @JvmOverloads constructor(
         val colWidth = totalAvailableWidth / 2f
         var curY = toolbarHeight + (8f * density)
 
-        // Section 1: الأحدث (Recent items) - Shown first
+        // Section 1: الأحدث (Recent items) - Always on top
         if (recentItems.isNotEmpty()) {
             val sectionY = curY - scrollYOffset
             if (sectionY + (24f * density) >= toolbarHeight && sectionY <= h) {
@@ -375,7 +432,7 @@ class ClipboardView @JvmOverloads constructor(
             curY += 8f * density
         }
 
-        // Section 2: العناصر المثبَّتة (Pinned items) - Shown below
+        // Section 2: العناصر المثبَّتة (Pinned items) - Always underneath
         if (pinnedItems.isNotEmpty()) {
             val sectionY = curY - scrollYOffset
             if (sectionY + (24f * density) >= toolbarHeight && sectionY <= h) {
@@ -386,7 +443,12 @@ class ClipboardView @JvmOverloads constructor(
             for (i in pinnedItems.indices step 2) {
                 val rightText = pinnedItems[i]
                 val leftText = pinnedItems.getOrNull(i + 1)
-                curY = recordAndDrawRow(canvas, w, curY, colWidth, rightText, leftText, true, h)
+                curY = recordAndDrawRow(
+                    canvas, w, curY, colWidth,
+                    rightText, leftText, true, h,
+                    rightPinnedIndex = i,
+                    leftPinnedIndex = if (leftText != null) i + 1 else -1
+                )
                 curY += gridGap
             }
         }
@@ -396,7 +458,12 @@ class ClipboardView @JvmOverloads constructor(
 
         canvas.restore()
 
-        // 4. If Action Dialog is open, draw overlay modal
+        // 4. If dragging a pinned card, draw the floating card over everything else
+        if (isDraggingPinned && draggedCard != null) {
+            drawFloatingDraggedCard(canvas, w, h)
+        }
+
+        // 5. If Action Dialog is open, draw overlay modal
         if (activeDialogCard != null) {
             drawActionDialog(canvas, w, h)
         }
@@ -410,7 +477,9 @@ class ClipboardView @JvmOverloads constructor(
         rightText: String?,
         leftText: String?,
         isPinned: Boolean,
-        viewHeight: Float
+        viewHeight: Float,
+        rightPinnedIndex: Int = -1,
+        leftPinnedIndex: Int = -1
     ): Float {
         val rowCardHeight = cardHeight
 
@@ -418,24 +487,24 @@ class ClipboardView @JvmOverloads constructor(
         if (!rightText.isNullOrBlank()) {
             val rightLeft = w - horizontalMargin - colWidth
             val rect = RectF(rightLeft, contentY, rightLeft + colWidth, contentY + rowCardHeight)
-            layoutCards.add(ClipCard(rightText, isPinned, rect))
+            layoutCards.add(ClipCard(rightText, isPinned, rect, rightPinnedIndex))
 
             val drawY = contentY - scrollYOffset
             if (drawY + rowCardHeight >= toolbarHeight && drawY <= viewHeight) {
                 val drawRect = RectF(rightLeft, drawY, rightLeft + colWidth, drawY + rowCardHeight)
-                drawCard(canvas, drawRect, rightText, isPinned)
+                drawCard(canvas, drawRect, rightText, isPinned, rightPinnedIndex)
             }
         }
 
         // Left column card
         if (!leftText.isNullOrBlank()) {
             val rect = RectF(horizontalMargin, contentY, horizontalMargin + colWidth, contentY + rowCardHeight)
-            layoutCards.add(ClipCard(leftText, isPinned, rect))
+            layoutCards.add(ClipCard(leftText, isPinned, rect, leftPinnedIndex))
 
             val drawY = contentY - scrollYOffset
             if (drawY + rowCardHeight >= toolbarHeight && drawY <= viewHeight) {
                 val drawRect = RectF(horizontalMargin, drawY, horizontalMargin + colWidth, drawY + rowCardHeight)
-                drawCard(canvas, drawRect, leftText, isPinned)
+                drawCard(canvas, drawRect, leftText, isPinned, leftPinnedIndex)
             }
         }
 
@@ -530,7 +599,19 @@ class ClipboardView @JvmOverloads constructor(
         }
     }
 
-    private fun drawCard(canvas: Canvas, rect: RectF, text: String, isPinned: Boolean) {
+    private fun drawCard(canvas: Canvas, rect: RectF, text: String, isPinned: Boolean, pinnedIndex: Int = -1) {
+        // If this is the pinned card currently being dragged, draw its source placeholder
+        if (isDraggingPinned && isPinned && draggedCard?.text == text) {
+            canvas.drawRoundRect(rect, cardRadius, cardRadius, dragSourceSlotPaint)
+            val placeholderText = "الموضع السابق 📍"
+            val textY = rect.centerY() - ((dragBadgeTextPaint.ascent() + dragBadgeTextPaint.descent()) / 2f)
+            canvas.drawText(placeholderText, rect.centerX(), textY, dragBadgeTextPaint)
+            return
+        }
+
+        val isTargetSlot = isDraggingPinned && hasMovedSignificantly && isPinned &&
+            pinnedIndex == dragTargetIndex && pinnedIndex != (draggedCard?.pinnedIndex ?: -1)
+
         val isBeingSwiped = isSwiping && swipedCard?.text == text && swipedCard?.isPinned == isPinned && swipeOffsetX < 0f
 
         if (isBeingSwiped) {
@@ -552,6 +633,14 @@ class ClipboardView @JvmOverloads constructor(
         canvas.drawRoundRect(rect, cardRadius, cardRadius, paintToUse)
         if (isDeleteMode) {
             canvas.drawRoundRect(rect, cardRadius, cardRadius, cardDeleteBorderPaint)
+        }
+
+        // If hovered target slot during drag reordering, draw highlighted glow outline
+        if (isTargetSlot) {
+            val activeTheme = settings?.theme?.let { Themes.byId(it) } ?: Themes.Amoled
+            dragTargetSlotPaint.color = activeTheme.keyAccent
+            dragTargetSlotPaint.strokeWidth = 2.5f * density
+            canvas.drawRoundRect(rect, cardRadius, cardRadius, dragTargetSlotPaint)
         }
 
         val textY = rect.centerY() - ((cardTextPaint.ascent() + cardTextPaint.descent()) / 2f)
@@ -581,6 +670,99 @@ class ClipboardView @JvmOverloads constructor(
         if (isBeingSwiped) {
             canvas.restore()
         }
+    }
+
+    private fun drawFloatingDraggedCard(canvas: Canvas, w: Float, h: Float) {
+        val card = draggedCard ?: return
+        val activeTheme = settings?.theme?.let { Themes.byId(it) } ?: Themes.Amoled
+
+        val totalAvailableWidth = w - (horizontalMargin * 2f) - gridGap
+        val colWidth = totalAvailableWidth / 2f
+        val floatWidth = colWidth * 1.04f
+        val floatHeight = cardHeight * 1.04f
+
+        val left = dragTouchX - (floatWidth / 2f)
+        val top = (dragTouchY - (floatHeight / 2f)).coerceIn(toolbarHeight + (2f * density), h - floatHeight - (2f * density))
+        val floatRect = RectF(left, top, left + floatWidth, top + floatHeight)
+
+        // 1. Soft dark drop shadow underneath
+        val shadowRect = RectF(floatRect.left + (2f * density), floatRect.top + (4f * density), floatRect.right + (2f * density), floatRect.bottom + (8f * density))
+        canvas.drawRoundRect(shadowRect, cardRadius * 1.2f, cardRadius * 1.2f, dragShadowPaint)
+
+        // 2. Elevated card background
+        dragCardBgPaint.color = when (activeTheme.id) {
+            "retro_1995" -> 0xFFD4D0C8.toInt()
+            "ios_style" -> 0xFF3A3A3C.toInt()
+            "honey_3d" -> 0xFF2A1B0E.toInt()
+            else -> 0xFF263238.toInt()
+        }
+        canvas.drawRoundRect(floatRect, cardRadius, cardRadius, dragCardBgPaint)
+
+        // 3. Glowing 3D accent border
+        dragBorderPaint.color = activeTheme.keyAccent
+        dragBorderPaint.strokeWidth = 2.5f * density
+        canvas.drawRoundRect(floatRect, cardRadius, cardRadius, dragBorderPaint)
+
+        // 4. Pin icon + Drag indicator
+        canvas.drawText("📌 ↕️", floatRect.left + (8f * density), floatRect.top + (16f * density), pinPaint)
+
+        // 5. Truncated text
+        val textY = floatRect.centerY() - ((cardTextPaint.ascent() + cardTextPaint.descent()) / 2f)
+        val maxTextWidth = floatRect.width() - (24f * density)
+        val clippedText = getCachedTruncatedText(card.text, maxTextWidth)
+        canvas.drawText(clippedText, floatRect.centerX(), textY, cardTextPaint)
+
+        // 6. Floating guidance badge
+        val badgeText = if (dragTargetIndex != -1 && dragTargetIndex != card.pinnedIndex) {
+            "إفلات هنا للترتيب في هذا الموضع 📍"
+        } else {
+            "اسحب للجهة الأخرى أو للأسفل لإعادة الترتيب ↕️"
+        }
+        dragBadgeTextPaint.textSize = 10.5f * density
+        val badgeW = dragBadgeTextPaint.measureText(badgeText) + (16f * density)
+        val badgeH = 20f * density
+        val badgeTop = if (floatRect.bottom + (28f * density) < h) {
+            floatRect.bottom + (6f * density)
+        } else {
+            floatRect.top - (6f * density) - badgeH
+        }
+        val badgeRect = RectF(
+            (floatRect.centerX() - badgeW / 2f).coerceIn(4f * density, w - badgeW - (4f * density)),
+            badgeTop,
+            (floatRect.centerX() + badgeW / 2f).coerceIn(badgeW + (4f * density), w - (4f * density)),
+            badgeTop + badgeH
+        )
+        canvas.drawRoundRect(badgeRect, 10f * density, 10f * density, dragBadgeBgPaint)
+        val badgeTextY = badgeRect.centerY() - ((dragBadgeTextPaint.ascent() + dragBadgeTextPaint.descent()) / 2f)
+        canvas.drawText(badgeText, badgeRect.centerX(), badgeTextY, dragBadgeTextPaint)
+    }
+
+    private fun findPinnedTargetIndex(x: Float, y: Float): Int {
+        val contentY = y + scrollYOffset
+        val pinnedCards = layoutCards.filter { it.isPinned }
+        if (pinnedCards.isEmpty()) return -1
+
+        // 1. Direct hit on an existing card's bounds
+        for (c in pinnedCards) {
+            if (c.bounds.contains(x, contentY)) {
+                return c.pinnedIndex
+            }
+        }
+
+        // 2. Proximity: find card with closest center
+        var bestIndex = -1
+        var bestDistSq = Float.MAX_VALUE
+        for (c in pinnedCards) {
+            val cb = c.bounds
+            val dx = x - cb.centerX()
+            val dy = contentY - cb.centerY()
+            val distSq = dx * dx + dy * dy
+            if (distSq < bestDistSq) {
+                bestDistSq = distSq
+                bestIndex = c.pinnedIndex
+            }
+        }
+        return bestIndex
     }
 
     private fun drawActionDialog(canvas: Canvas, w: Float, h: Float) {
@@ -623,7 +805,7 @@ class ClipboardView @JvmOverloads constructor(
         canvas.drawText("📋 لصق النص في المحادثة", dialogPasteBounds.centerX(), b1TextY, dialogTextPaint)
 
         // Button 2: Pin / Unpin
-        val pinLabel = if (isPinned) "📌 إلغاء التثبيت" else "📌 تثبيت في أعلى الحافظة (حماية من الحذف)"
+        val pinLabel = if (isPinned) "📌 إلغاء التثبيت" else "📌 تثبيت النص (حماية من الحذف)"
         val b2Top = b1Top + btnHeight + (8f * density)
         dialogPinBounds.set(dLeft + btnMarginH, b2Top, dLeft + btnMarginH + btnWidth, b2Top + btnHeight)
         canvas.drawRoundRect(dialogPinBounds, 8f * density, 8f * density, dialogButtonPaint)
@@ -631,14 +813,14 @@ class ClipboardView @JvmOverloads constructor(
         val b2TextY = dialogPinBounds.centerY() - ((dialogTextPaint.ascent() + dialogTextPaint.descent()) / 2f)
         canvas.drawText(pinLabel, dialogPinBounds.centerX(), b2TextY, dialogTextPaint)
 
-        // Button 3: Delete
+        // Button 3: Delete or Reorder
         val b3Top = b2Top + btnHeight + (8f * density)
         dialogDeleteBounds.set(dLeft + btnMarginH, b3Top, dLeft + btnMarginH + btnWidth, b3Top + btnHeight)
         if (isPinned) {
-            canvas.drawRoundRect(dialogDeleteBounds, 8f * density, 8f * density, dialogLockedBtnPaint)
-            dialogTextPaint.color = 0xFF9CA3AF.toInt()
+            canvas.drawRoundRect(dialogDeleteBounds, 8f * density, 8f * density, dialogButtonPaint)
+            dialogTextPaint.color = 0xFF38BDF8.toInt()
             val b3TextY = dialogDeleteBounds.centerY() - ((dialogTextPaint.ascent() + dialogTextPaint.descent()) / 2f)
-            canvas.drawText("🔒 نص مثبت (قم بإلغاء التثبيت أولاً لحذفه)", dialogDeleteBounds.centerX(), b3TextY, dialogTextPaint)
+            canvas.drawText("🔄 تحريك النص (نقل للجهة الأخرى / للأسفل)", dialogDeleteBounds.centerX(), b3TextY, dialogTextPaint)
         } else {
             canvas.drawRoundRect(dialogDeleteBounds, 8f * density, 8f * density, dialogDeleteBtnPaint)
             dialogTextPaint.color = 0xFFF87171.toInt()
@@ -747,7 +929,7 @@ class ClipboardView @JvmOverloads constructor(
                     } else {
                         clipboard.pin(item)
                         clipboard.remove(item, context)
-                        Toast.makeText(context, "تم تثبيت النص في أعلى الحافظة (محمي من الحذف) 📌", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "تم تثبيت النص (محمي من الحذف) 📌", Toast.LENGTH_SHORT).show()
                     }
                     textTruncateCache.clear()
                     activeDialogCard = null
@@ -756,7 +938,18 @@ class ClipboardView @JvmOverloads constructor(
                 } else if (dialogDeleteBounds.contains(x, y)) {
                     vibrateFeedback()
                     if (card.isPinned) {
-                        Toast.makeText(context, "النصوص المثبتة لا يتم مسحها إلا بعد إلغاء التثبيت 📌", Toast.LENGTH_SHORT).show()
+                        val currentPinned = clipboard.pinnedItems()
+                        val curIdx = currentPinned.indexOf(item)
+                        if (curIdx != -1 && currentPinned.size > 1) {
+                            val nextIdx = (curIdx + 1) % currentPinned.size
+                            clipboard.reorderPinned(curIdx, nextIdx)
+                            textTruncateCache.clear()
+                            Toast.makeText(context, "تم نقل النص إلى الموقع التالي ✓", Toast.LENGTH_SHORT).show()
+                            activeDialogCard = null
+                            invalidate()
+                        } else {
+                            Toast.makeText(context, "اضغط مطولاً على أي نص مثبت لسحبه وإعادة ترتيبه بحرية ↕️", Toast.LENGTH_SHORT).show()
+                        }
                     } else {
                         clipboard.remove(item, context)
                         textTruncateCache.clear()
@@ -788,6 +981,10 @@ class ClipboardView @JvmOverloads constructor(
                 longPressTriggered = false
                 pressedCard = null
                 swipedCard = null
+                isDraggingPinned = false
+                draggedCard = null
+                dragTargetIndex = -1
+                hasMovedSignificantly = false
 
                 // If touched below the toolbar, find if a card was hit
                 if (event.y >= toolbarHeight) {
@@ -795,15 +992,44 @@ class ClipboardView @JvmOverloads constructor(
                     if (card != null) {
                         pressedCard = card
                         swipedCard = card
-                        longPressHandler.postDelayed(longPressRunnable, 350L)
+                        // 280ms threshold for responsive long-press & drag
+                        longPressHandler.postDelayed(longPressRunnable, 280L)
                     }
                 }
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
+                // If dragging a pinned card to reorder it
+                if (isDraggingPinned) {
+                    val moveDist = Math.hypot((event.x - downX).toDouble(), (event.y - downY).toDouble()).toFloat()
+                    if (moveDist > touchSlop) {
+                        hasMovedSignificantly = true
+                    }
+                    dragTouchX = event.x
+                    dragTouchY = event.y
+
+                    val newTarget = findPinnedTargetIndex(event.x, event.y)
+                    if (newTarget != -1 && newTarget != dragTargetIndex) {
+                        dragTargetIndex = newTarget
+                        vibrateFeedback()
+                    }
+
+                    // Auto-scrolling when hovering near top/bottom content edge
+                    if (event.y < toolbarHeight + (32f * density) && scrollYOffset > 0f) {
+                        scrollYOffset = (scrollYOffset - (6f * density)).coerceAtLeast(0f)
+                    } else if (event.y > height - (32f * density) && scrollYOffset < maxScroll) {
+                        scrollYOffset = (scrollYOffset + (6f * density)).coerceAtMost(maxScroll)
+                    }
+
+                    invalidate()
+                    return true
+                }
+
                 val dx = event.x - downX
                 val totalDy = event.y - downY
                 val dy = event.y - lastY
+
+                val effectiveSlop = if (pressedCard?.isPinned == true) touchSlop * 1.6f else touchSlop.toFloat()
 
                 if (!isDragging && !isSwiping) {
                     // Check if swiping right-to-left on an unpinned card
@@ -814,7 +1040,7 @@ class ClipboardView @JvmOverloads constructor(
                         } else {
                             swipedCard = null
                         }
-                    } else if (abs(totalDy) > touchSlop) {
+                    } else if (abs(totalDy) > effectiveSlop) {
                         isDragging = true
                         longPressHandler.removeCallbacks(longPressRunnable)
                         swipedCard = null
@@ -837,6 +1063,38 @@ class ClipboardView @JvmOverloads constructor(
             }
             MotionEvent.ACTION_UP -> {
                 longPressHandler.removeCallbacks(longPressRunnable)
+
+                // If user was dragging a pinned card to reorder it
+                if (isDraggingPinned) {
+                    val card = draggedCard
+                    val fromIndex = card?.pinnedIndex ?: -1
+                    val toIndex = dragTargetIndex
+
+                    if (hasMovedSignificantly && card != null && fromIndex != -1 && toIndex != -1 && fromIndex != toIndex) {
+                        val reordered = clipboard.reorderPinned(fromIndex, toIndex)
+                        if (reordered) {
+                            vibrateFeedback()
+                            textTruncateCache.clear()
+                            Toast.makeText(context, "تم حفظ الترتيب الجديد ✓", Toast.LENGTH_SHORT).show()
+                        }
+                    } else if (!hasMovedSignificantly && card != null) {
+                        // Finger held and lifted without dragging -> open Action Dialog
+                        activeDialogCard = card
+                        ignoreNextUpForDialog = true
+                    }
+
+                    isDraggingPinned = false
+                    draggedCard = null
+                    dragTargetIndex = -1
+                    hasMovedSignificantly = false
+                    longPressTriggered = false
+                    pressedCard = null
+                    swipedCard = null
+                    velocityTracker?.recycle()
+                    velocityTracker = null
+                    invalidate()
+                    return true
+                }
 
                 if (longPressTriggered) {
                     longPressTriggered = false
@@ -943,6 +1201,10 @@ class ClipboardView @JvmOverloads constructor(
             }
             MotionEvent.ACTION_CANCEL -> {
                 longPressHandler.removeCallbacks(longPressRunnable)
+                isDraggingPinned = false
+                draggedCard = null
+                dragTargetIndex = -1
+                hasMovedSignificantly = false
                 isDragging = false
                 isSwiping = false
                 swipedCard = null

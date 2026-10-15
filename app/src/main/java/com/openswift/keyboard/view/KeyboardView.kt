@@ -75,89 +75,104 @@ class KeyboardView(
         // 3D tactile keycap styling per theme
         when (theme.id) {
             "honey_3d" -> {
-                realisticTopFacePaint.color = 0xFF6B4318.toInt()
-                realisticFacePressedPaint.color = 0xFF583612.toInt()
+                realisticTopFacePaint.color = 0xFF7D4E1C.toInt()
+                realisticFacePressedPaint.color = 0xFF633C12.toInt()
                 realisticBasePaint.color = 0xFF351C06.toInt()
-                realisticModifierFacePaint.color = 0xFF4A2B0E.toInt()
+                realisticModifierFacePaint.color = 0xFF54320F.toInt()
                 realisticModifierBasePaint.color = 0xFF241304.toInt()
                 realisticEnterFacePaint.color = 0xFFF59E0B.toInt()
-                realisticEnterBasePaint.color = 0xFFB45309.toInt()
+                realisticEnterBasePaint.color = 0xFF9E4304.toInt()
                 realisticEnterPressedPaint.color = 0xFFD97706.toInt()
                 realisticShiftFacePaint.color = 0xFFF59E0B.toInt()
-                realisticShiftBasePaint.color = 0xFFB45309.toInt()
+                realisticShiftBasePaint.color = 0xFF9E4304.toInt()
                 realisticShiftPressedPaint.color = 0xFFD97706.toInt()
-                realisticTextPaint.color = 0xFFFFF6DF.toInt()
-                realisticDropShadowPaint.color = 0x881A0B02.toInt()
-                realisticTopRimPaint.color = 0x66FDE68A.toInt()
-                realisticBaseBorderPaint.color = 0x44D97706.toInt()
+                realisticTextPaint.color = 0xFFFFFFFF.toInt()
+                realisticDropShadowPaint.color = 0xAA1A0B02.toInt()
+                realisticTopRimPaint.color = 0x88FDE68A.toInt()
+                realisticBaseBorderPaint.color = 0x66F59E0B.toInt()
             }
             "retro_1995" -> {
-                realisticTopFacePaint.color = 0xFFECE9D8.toInt()
-                realisticFacePressedPaint.color = 0xFFDDD9C8.toInt()
-                realisticBasePaint.color = 0xFF888478.toInt()
-                realisticModifierFacePaint.color = 0xFFD4D0C8.toInt()
-                realisticModifierBasePaint.color = 0xFF706C60.toInt()
-                realisticEnterFacePaint.color = 0xFF000080.toInt()
-                realisticEnterBasePaint.color = 0xFF000050.toInt()
-                realisticEnterPressedPaint.color = 0xFF000066.toInt()
-                realisticShiftFacePaint.color = 0xFF000080.toInt()
-                realisticShiftBasePaint.color = 0xFF000050.toInt()
-                realisticShiftPressedPaint.color = 0xFF000066.toInt()
-                realisticTextPaint.color = 0xFF111111.toInt()
-                realisticDropShadowPaint.color = 0x55000000.toInt()
-                realisticTopRimPaint.color = 0xCCFFFFFF.toInt()
-                realisticBaseBorderPaint.color = 0x66808080.toInt()
+                realisticTopFacePaint.color = 0xFFE6E2D4.toInt()
+                realisticFacePressedPaint.color = 0xFFD8D3C4.toInt()
+                realisticBasePaint.color = 0xFF8F8A7D.toInt()
+                realisticModifierFacePaint.color = 0xFFBEB9AB.toInt()
+                realisticModifierBasePaint.color = 0xFF6B665A.toInt()
+                realisticEnterFacePaint.color = 0xFF0A246A.toInt()
+                realisticEnterBasePaint.color = 0xFF051336.toInt()
+                realisticEnterPressedPaint.color = 0xFF0D2D82.toInt()
+                realisticShiftFacePaint.color = 0xFF0A246A.toInt()
+                realisticShiftBasePaint.color = 0xFF051336.toInt()
+                realisticShiftPressedPaint.color = 0xFF0D2D82.toInt()
+                realisticTextPaint.color = 0xFF141414.toInt()
+                realisticDropShadowPaint.color = 0x66000000.toInt()
+                realisticTopRimPaint.color = 0x88FFFFFF.toInt()
+                realisticBaseBorderPaint.color = 0x557A7569.toInt()
             }
             "ios_style" -> {
                 realisticTopFacePaint.color = 0xFFFFFFFF.toInt()
                 realisticFacePressedPaint.color = 0xFFE5E7EB.toInt()
-                realisticBasePaint.color = 0xFF9CA3AF.toInt()
-                realisticModifierFacePaint.color = 0xFFB0B6C2.toInt()
-                realisticModifierBasePaint.color = 0xFF848C9A.toInt()
+                realisticBasePaint.color = 0xFF8E95A2.toInt()
+                realisticModifierFacePaint.color = 0xFFB4BAC6.toInt()
+                realisticModifierBasePaint.color = 0xFF6D7584.toInt()
                 realisticEnterFacePaint.color = 0xFF007AFF.toInt()
-                realisticEnterBasePaint.color = 0xFF0056B3.toInt()
+                realisticEnterBasePaint.color = 0xFF004CB3.toInt()
                 realisticEnterPressedPaint.color = 0xFF0062CC.toInt()
                 realisticShiftFacePaint.color = 0xFF007AFF.toInt()
-                realisticShiftBasePaint.color = 0xFF0056B3.toInt()
+                realisticShiftBasePaint.color = 0xFF004CB3.toInt()
                 realisticShiftPressedPaint.color = 0xFF0062CC.toInt()
-                realisticTextPaint.color = 0xFF000000.toInt()
-                realisticDropShadowPaint.color = 0x44000000.toInt()
-                realisticTopRimPaint.color = 0x22000000.toInt()
-                realisticBaseBorderPaint.color = 0x1A000000.toInt()
+                realisticTextPaint.color = 0xFF0F172A.toInt()
+                realisticDropShadowPaint.color = 0x66000000.toInt()
+                realisticTopRimPaint.color = 0x99FFFFFF.toInt()
+                realisticBaseBorderPaint.color = 0x33000000.toInt()
             }
-            "amoled" -> {
-                realisticTopFacePaint.color = 0xFF18263A.toInt()
-                realisticFacePressedPaint.color = 0xFF121E2F.toInt()
-                realisticBasePaint.color = 0xFF0D1622.toInt()
-                realisticModifierFacePaint.color = 0xFF121C2B.toInt()
-                realisticModifierBasePaint.color = 0xFF090E17.toInt()
-                realisticEnterFacePaint.color = 0xFF00E5FF.toInt()
-                realisticEnterBasePaint.color = 0xFF009EB0.toInt()
-                realisticEnterPressedPaint.color = 0xFF00C4DA.toInt()
-                realisticShiftFacePaint.color = 0xFF00E5FF.toInt()
-                realisticShiftBasePaint.color = 0xFF009EB0.toInt()
-                realisticShiftPressedPaint.color = 0xFF00C4DA.toInt()
-                realisticTextPaint.color = 0xFFFFFFFF.toInt()
+            "amoled", "swift_dark" -> {
+                realisticTopFacePaint.color = 0xFF1B222D.toInt()
+                realisticFacePressedPaint.color = 0xFF141922.toInt()
+                realisticBasePaint.color = 0xFF0B0E14.toInt()
+                realisticModifierFacePaint.color = 0xFF151A23.toInt()
+                realisticModifierBasePaint.color = 0xFF080B0F.toInt()
+                realisticEnterFacePaint.color = 0xFF0284C7.toInt()
+                realisticEnterBasePaint.color = 0xFF0369A1.toInt()
+                realisticEnterPressedPaint.color = 0xFF0284C7.toInt()
+                realisticShiftFacePaint.color = 0xFF0284C7.toInt()
+                realisticShiftBasePaint.color = 0xFF0369A1.toInt()
+                realisticShiftPressedPaint.color = 0xFF0284C7.toInt()
+                realisticTextPaint.color = 0xFFEAEEF4.toInt()
                 realisticDropShadowPaint.color = 0xAA000000.toInt()
-                realisticTopRimPaint.color = 0x3300E5FF.toInt()
-                realisticBaseBorderPaint.color = 0x2A5078A0.toInt()
+                realisticTopRimPaint.color = 0x22FFFFFF.toInt()
+                realisticBaseBorderPaint.color = 0x3D38BDF8.toInt()
             }
             else -> {
                 realisticTopFacePaint.color = theme.keyBackground
                 realisticFacePressedPaint.color = theme.keyModifierBackground
-                realisticBasePaint.color = theme.keyModifierBackground
-                realisticModifierFacePaint.color = theme.keyModifierBackground
-                realisticModifierBasePaint.color = theme.background
+                val bg = theme.keyBackground
+                val r = (((bg shr 16) and 0xFF) * 6 / 10).coerceIn(0, 255)
+                val g = (((bg shr 8) and 0xFF) * 6 / 10).coerceIn(0, 255)
+                val b = ((bg and 0xFF) * 6 / 10).coerceIn(0, 255)
+                realisticBasePaint.color = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
+
+                val mBg = theme.keyModifierBackground
+                val mr = (((mBg shr 16) and 0xFF) * 6 / 10).coerceIn(0, 255)
+                val mg = (((mBg shr 8) and 0xFF) * 6 / 10).coerceIn(0, 255)
+                val mb = ((mBg and 0xFF) * 6 / 10).coerceIn(0, 255)
+                realisticModifierFacePaint.color = mBg
+                realisticModifierBasePaint.color = (0xFF shl 24) or (mr shl 16) or (mg shl 8) or mb
+
                 realisticEnterFacePaint.color = theme.keyAccent
-                realisticEnterBasePaint.color = theme.keyAccent
+                val ar = (((theme.keyAccent shr 16) and 0xFF) * 7 / 10).coerceIn(0, 255)
+                val ag = (((theme.keyAccent shr 8) and 0xFF) * 7 / 10).coerceIn(0, 255)
+                val ab = ((theme.keyAccent and 0xFF) * 7 / 10).coerceIn(0, 255)
+                realisticEnterBasePaint.color = (0xFF shl 24) or (ar shl 16) or (ag shl 8) or ab
                 realisticEnterPressedPaint.color = theme.keyAccent
+
                 realisticShiftFacePaint.color = theme.keyAccent
-                realisticShiftBasePaint.color = theme.keyAccent
+                realisticShiftBasePaint.color = realisticEnterBasePaint.color
                 realisticShiftPressedPaint.color = theme.keyAccent
+
                 realisticTextPaint.color = theme.keyText
-                realisticDropShadowPaint.color = 0x66000000.toInt()
-                realisticTopRimPaint.color = 0x22FFFFFF.toInt()
-                realisticBaseBorderPaint.color = 0x1A000000.toInt()
+                realisticDropShadowPaint.color = 0x99000000.toInt()
+                realisticTopRimPaint.color = 0x66FFFFFF.toInt()
+                realisticBaseBorderPaint.color = 0x44FFFFFF.toInt()
             }
         }
     }
@@ -609,10 +624,14 @@ class KeyboardView(
         } else {
             keyHeightPx * 0.30f
         }
-        val baseButtonTextSize = sadFittedTextSize.coerceIn(keyHeightPx * 0.22f, keyHeightPx * 0.33f)
+        val baseButtonTextSize = sadFittedTextSize.coerceIn(keyHeightPx * 0.30f, keyHeightPx * 0.40f)
 
         // Scale typography with the uniform button text size
         textPaint.textSize = baseButtonTextSize
+        textPaint.typeface = TYPEFACE_BOLD
+        realisticTextPaint.typeface = TYPEFACE_BOLD
+        realisticTextPaint.isAntiAlias = true
+        realisticTextPaint.isSubpixelText = true
         suggestionPaint.textSize = keyHeightPx * 0.30f
         previewPaint.textSize = (keyHeightPx * 0.18f)
         
@@ -717,14 +736,14 @@ class KeyboardView(
 
                 // Fill toolbar background matching active theme
                 toolbarBarBgPaint.color = when (theme.id) {
-                    "retro_1995" -> 0xFFB4B0A2.toInt()
+                    "retro_1995" -> 0xFFBFBAAC.toInt()
                     "ios_style" -> 0xFFC0C5CF.toInt()
                     "honey_3d" -> 0xFF140B04.toInt()
-                    else -> 0xFF050B14.toInt()
+                    else -> 0xFF0C0F14.toInt()
                 }
-                toolbarBarBorderPaint.color = theme.keyAccent
-                toolbarBarBorderPaint.strokeWidth = if (theme.id == "ios_style") 1.2f * density else 2.2f * density
-                toolbarDividerPaint.color = theme.keyAccent
+                toolbarBarBorderPaint.color = if (theme.id == "retro_1995") 0x887A7569.toInt() else theme.keyAccent
+                toolbarBarBorderPaint.strokeWidth = 1.2f * density
+                toolbarDividerPaint.color = if (theme.id == "retro_1995") 0x887A7569.toInt() else theme.keyAccent
                 toolbarDividerPaint.strokeWidth = 1.5f * density
                 toolbarDividerPaint.alpha = 100
                 canvas.drawRoundRect(toolbarBarRect, barRadius, barRadius, toolbarBarBgPaint)
@@ -953,25 +972,25 @@ class KeyboardView(
     ) {
         val width = right - left
         val height = bottom - top
-        // Soft squircle corner radius matching the user's reference image
-        val radius = minOf(height * 0.28f, width * 0.28f, 13.5f * density)
+        // Refined tactile squircle corner radius
+        val radius = minOf(height * 0.22f, width * 0.22f, 10f * density)
 
         val isEnter = (key.code == KC.ENTER)
         val isShiftActive = (key.code == KC.SHIFT && shiftActive)
 
-        // 3D elevation and tactile travel parameters
-        val bevelHeight = if (isPressed) 1f * density else 2.6f * density
-        val topOffset = if (isPressed) 1.6f * density else 0f
+        // 3D elevation and tactile travel parameters (prominent 3D block extrusion)
+        val bevelHeight = if (isPressed) 1.2f * density else 4.6f * density
+        val topOffset = if (isPressed) 3.4f * density else 0f
 
-        // 1. Soft ambient drop shadow underneath key
+        // 1. Prominent ambient drop shadow underneath key
         if (!isPressed) {
-            val shadowOffset = 2.4f * density
+            val shadowOffset = 3.6f * density
             realisticKeyShadowRect.set(left, top + shadowOffset, right, bottom + shadowOffset)
             canvas.drawRoundRect(realisticKeyShadowRect, radius, radius, realisticDropShadowPaint)
         }
 
         // 2. Bottom base/bevel (the physical 3D side edge of the keycap)
-        realisticKeyBaseRect.set(left, top + bevelHeight, right, bottom)
+        realisticKeyBaseRect.set(left, top + (bevelHeight * 0.35f), right, bottom)
         val basePaint = when {
             isEnter -> realisticEnterBasePaint
             isShiftActive -> realisticShiftBasePaint
@@ -980,7 +999,7 @@ class KeyboardView(
         }
         canvas.drawRoundRect(realisticKeyBaseRect, radius, radius, basePaint)
 
-        // 3. Top face of the keycap (pristine white squircle matching image)
+        // 3. Top face of the keycap (elevated tactile surface)
         val faceTop = top + topOffset
         val faceBottom = bottom - bevelHeight + topOffset
         realisticKeyFaceRect.set(left, faceTop, right, faceBottom)
@@ -996,11 +1015,13 @@ class KeyboardView(
         }
         canvas.drawRoundRect(realisticKeyFaceRect, radius, radius, facePaint)
 
-        // 4. Subtle top rim highlight and outer edge line for crispness
+        // 4. Subtle top rim specular highlight and crisp 3D outline
+        realisticTopRimPaint.strokeWidth = 1.4f * density
         canvas.drawRoundRect(realisticKeyFaceRect, radius, radius, realisticTopRimPaint)
+        realisticBaseBorderPaint.strokeWidth = 1.0f * density
         canvas.drawRoundRect(realisticKeyFaceRect, radius, radius, realisticBaseBorderPaint)
 
-        // 5. Glyph / Icon rendering
+        // 5. Glyph / Icon rendering (crisp, bold, high-contrast)
         val centerX = (left + right) / 2f
         val centerY = (faceTop + faceBottom) / 2f
 
@@ -1011,7 +1032,7 @@ class KeyboardView(
         }
 
         if (keyIcon != null) {
-            val iconSize = (height * 0.40f).toInt()
+            val iconSize = (height * 0.44f).toInt()
             val iconLeft = (centerX - (iconSize / 2f)).toInt()
             val iconTop = (centerY - (iconSize / 2f)).toInt()
             keyIcon.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize)
@@ -1020,9 +1041,9 @@ class KeyboardView(
         } else if (displayLabel.isNotEmpty()) {
             realisticTextPaint.color = glyphColor
             val textSize = if (displayLabel.length > 2) {
-                baseButtonTextSize * 0.72f
+                baseButtonTextSize * 0.75f
             } else if (displayLabel.length == 1 && (displayLabel[0] in 'ء'..'ي' || displayLabel == "لا")) {
-                baseButtonTextSize * 1.05f
+                baseButtonTextSize * 1.15f
             } else {
                 baseButtonTextSize
             }
@@ -1053,20 +1074,34 @@ class KeyboardView(
         val isPressed = (downKey == key || pointerKeys.containsValue(key))
         val isShiftActive = (key.code == KC.SHIFT && shiftActive)
 
+        // Subtle 3D shadow and bottom bevel even in classic mode
+        if (!isPressed) {
+            val shadowOffset = 2.5f * density
+            canvas.drawRoundRect(left, top + shadowOffset, right, bottom + shadowOffset, effectiveKeyRadius, effectiveKeyRadius, realisticDropShadowPaint)
+        }
+
+        val bevel = if (isPressed) 1f * density else 3f * density
+        val topOffset = if (isPressed) 2f * density else 0f
+        
+        // Base edge
+        canvas.drawRoundRect(left, top + bevel * 0.4f, right, bottom, effectiveKeyRadius, effectiveKeyRadius, keyModifierBgPaint)
+
         val bgPaint = when {
             isPressed -> ripplePaint
             isShiftActive -> keyModifierBgPaint
             key.isModifier -> keyModifierBgPaint
             else -> keyBgPaint
         }
-        canvas.drawRoundRect(left, top, right, bottom, effectiveKeyRadius, effectiveKeyRadius, bgPaint)
+        val faceBottom = bottom - bevel + topOffset
+        canvas.drawRoundRect(left, top + topOffset, right, faceBottom, effectiveKeyRadius, effectiveKeyRadius, bgPaint)
 
         val borderPaint = if (isShiftActive) shiftHighlightPaint else keyBorderPaint
-        canvas.drawRoundRect(left, top, right, bottom, effectiveKeyRadius, effectiveKeyRadius, borderPaint)
+        borderPaint.strokeWidth = 1f * density
+        canvas.drawRoundRect(left, top + topOffset, right, faceBottom, effectiveKeyRadius, effectiveKeyRadius, borderPaint)
 
-        val centerY = (top + bottom) / 2f
+        val centerY = ((top + topOffset) + faceBottom) / 2f
         if (keyIcon != null) {
-            val iconSize = ((bottom - top) * 0.40f).toInt()
+            val iconSize = ((bottom - top) * 0.44f).toInt()
             val iconLeft = (textX - (iconSize / 2f)).toInt()
             val iconTop = (centerY - (iconSize / 2f)).toInt()
             keyIcon.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize)
@@ -1074,7 +1109,14 @@ class KeyboardView(
             keyIcon.draw(canvas)
         } else if (displayLabel.isNotEmpty()) {
             textPaint.color = if (isShiftActive) theme.keyAccent else theme.keyText
-            textPaint.textSize = if (displayLabel.length > 2) baseButtonTextSize * 0.72f else baseButtonTextSize
+            val textSize = if (displayLabel.length > 2) {
+                baseButtonTextSize * 0.75f
+            } else if (displayLabel.length == 1 && (displayLabel[0] in 'ء'..'ي' || displayLabel == "لا")) {
+                baseButtonTextSize * 1.15f
+            } else {
+                baseButtonTextSize
+            }
+            textPaint.textSize = textSize
             val baseline = centerY - ((textPaint.ascent() + textPaint.descent()) / 2f)
             canvas.drawText(displayLabel, textX, baseline, textPaint)
         }
@@ -1571,16 +1613,17 @@ class KeyboardView(
             val isEnter = (key.code == KC.ENTER)
 
             if (realisticKeys) {
-                val bevel = if (isPressed) 1f * density else 2.5f * density
-                val tOffset = if (isPressed) 1.5f * density else 0f
-                val r = minOf((kBottom - kTop) * 0.28f, (kRight - kLeft) * 0.28f, 13f * density)
+                val bevel = if (isPressed) 1.2f * density else 4.6f * density
+                val tOffset = if (isPressed) 3.4f * density else 0f
+                val r = minOf((kBottom - kTop) * 0.22f, (kRight - kLeft) * 0.22f, 10f * density)
 
                 if (!isPressed) {
-                    realisticKeyShadowRect.set(kLeft, kTop + 2.2f * density, kRight, kBottom + 2.2f * density)
+                    val shadowOffset = 3.6f * density
+                    realisticKeyShadowRect.set(kLeft, kTop + shadowOffset, kRight, kBottom + shadowOffset)
                     canvas.drawRoundRect(realisticKeyShadowRect, r, r, realisticDropShadowPaint)
                 }
 
-                realisticKeyBaseRect.set(kLeft, kTop + bevel, kRight, kBottom)
+                realisticKeyBaseRect.set(kLeft, kTop + (bevel * 0.35f), kRight, kBottom)
                 val baseP = if (isEnter) realisticEnterBasePaint else if (key.isModifier) realisticModifierBasePaint else realisticBasePaint
                 canvas.drawRoundRect(realisticKeyBaseRect, r, r, baseP)
 
@@ -1596,7 +1639,9 @@ class KeyboardView(
                     else -> realisticTopFacePaint
                 }
                 canvas.drawRoundRect(realisticKeyFaceRect, r, r, faceP)
+                realisticTopRimPaint.strokeWidth = 1.4f * density
                 canvas.drawRoundRect(realisticKeyFaceRect, r, r, realisticTopRimPaint)
+                realisticBaseBorderPaint.strokeWidth = 1.0f * density
                 canvas.drawRoundRect(realisticKeyFaceRect, r, r, realisticBaseBorderPaint)
             } else {
                 val bg = customBgColor ?: if (key.isModifier) theme.keyModifierBackground else theme.keyBackground
