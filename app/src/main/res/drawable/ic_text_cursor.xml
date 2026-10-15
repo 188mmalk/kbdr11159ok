@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Google Material Icons Round Text Editing / Cursor Navigation, Apache License 2.0 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Left solid navigation arrow -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M7.2,7.6v8.8c0,0.45 -0.54,0.69 -0.88,0.38L1.8,12.38c-0.25,-0.21 -0.25,-0.55 0,-0.76l4.52,-4.4c0.34,-0.31 0.88,-0.07 0.88,0.38z" />
+    <!-- Center bold I-beam cursor with wide rounded serifs -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9.0,4.2h6.0c0.75,0 1.35,0.6 1.35,1.35s-0.6,1.35 -1.35,1.35h-1.6v10.2h1.6c0.75,0 1.35,0.6 1.35,1.35s-0.6,1.35 -1.35,1.35h-6.0c-0.75,0 -1.35,-0.6 -1.35,-1.35s0.6,-1.35 1.35,-1.35h1.6v-10.2h-1.6c-0.75,0 -1.35,-0.6 -1.35,-1.35s0.6,-1.35 1.35,-1.35z" />
+    <!-- Right solid navigation arrow -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M16.8,7.6v8.8c0,0.45 0.54,0.69 0.88,0.38l4.52,-4.4c0.25,-0.21 0.25,-0.55 0,-0.76l-4.52,-4.4c-0.34,-0.31 -0.88,-0.07 -0.88,0.38z" />
+</vector>

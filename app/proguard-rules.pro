@@ -1,0 +1,10 @@
+-keep class com.openswift.keyboard.OpenSwiftIME { *; }
+-keepclassmembers class * extends android.inputmethodservice.InputMethodService { *; }
+-keep class com.openswift.keyboard.ui.** { *; }
+-keep class com.openswift.keyboard.voice.** { *; }
+-keep class com.openswift.keyboard.data.** { *; }
+-keep class com.openswift.keyboard.engine.** { *; }
+-keep class com.openswift.keyboard.layout.** { *; }
+-keep class com.openswift.keyboard.theme.** { *; }
+-keep class com.openswift.keyboard.view.** { *; }
+-dontwarn androidx.**

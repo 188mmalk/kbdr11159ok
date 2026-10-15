@@ -1,0 +1,8 @@
+{
+  "name": "Remix افضل كيبورد",
+  "description": "الكيبورد رقم واحد افضل شيء",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

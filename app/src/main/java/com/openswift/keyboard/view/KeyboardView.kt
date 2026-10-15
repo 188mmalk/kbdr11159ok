@@ -1,0 +1,1936 @@
+package com.openswift.keyboard.view
+
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
+import android.util.AttributeSet
+import android.view.MotionEvent
+import android.view.View
+import androidx.appcompat.content.res.AppCompatResources
+import com.openswift.keyboard.R
+import com.openswift.keyboard.data.Settings
+import com.openswift.keyboard.engine.UserDictionary
+import com.openswift.keyboard.engine.GlideDecoder
+import com.openswift.keyboard.engine.WordList
+import com.openswift.keyboard.layout.Key
+import com.openswift.keyboard.layout.KeyLayout
+import com.openswift.keyboard.layout.KeyCode as KC
+import com.openswift.keyboard.theme.KbTheme
+import com.openswift.keyboard.theme.Themes
+import kotlin.math.ceil
+
+class KeyboardView(
+    ctx: Context,
+    private val settings: Settings,
+    private var wordList: WordList,
+    private var userDict: UserDictionary,
+    private var keyLayout: KeyLayout,
+    theme: KbTheme = Themes.byId(settings.theme),
+    attrs: AttributeSet? = null,
+    defStyle: Int = 0
+) : View(ctx, attrs, defStyle) {
+
+    var theme: KbTheme = theme
+        set(value) {
+            field = value
+            applyThemePaints()
+            invalidate()
+        }
+
+    fun updateTheme(newTheme: KbTheme) {
+        this.theme = newTheme
+    }
+
+    private fun applyThemePaints() {
+        keyOutline.color = theme.keyAccent
+        textPaint.color = theme.keyText
+        suggestionPaint.color = theme.suggestionText
+        suggestionBgPaint.color = theme.suggestionBg
+        pillPaint.color = theme.keyBackground
+        pillBorderPaint.color = theme.keyAccent
+        pillBorderPaint.alpha = 90
+        previewPaint.color = theme.suggestionText
+        previewPaint.alpha = 180
+        trailPaint.color = theme.gestureTrail
+        ripplePaint.color = theme.keyAccent
+        keyModifierBgPaint.color = theme.keyModifierBackground
+        keyBgPaint.color = theme.keyBackground
+        shiftHighlightPaint.color = theme.keyAccent
+        clipboardIcon?.setTint(theme.keyText)
+        shiftIcon?.setTint(theme.keyText)
+        deleteIcon?.setTint(theme.keyText)
+        enterIcon?.setTint(theme.keyText)
+        emojiIcon?.setTint(theme.keyText)
+        languageIcon?.setTint(theme.keyText)
+        settingsIcon?.setTint(theme.keyText)
+        micIcon?.setTint(theme.keyText)
+        audioWaveIcon?.setTint(theme.keyText)
+        textCursorIcon?.setTint(theme.keyText)
+        hideIcon?.setTint(theme.keyText)
+        hubMonogramIcon?.setTint(theme.keyText)
+        numpadEnterIcon?.setTint(theme.keyText)
+
+        // 3D tactile keycap styling per theme
+        when (theme.id) {
+            "honey_3d" -> {
+                realisticTopFacePaint.color = 0xFF6B4318.toInt()
+                realisticFacePressedPaint.color = 0xFF583612.toInt()
+                realisticBasePaint.color = 0xFF351C06.toInt()
+                realisticModifierFacePaint.color = 0xFF4A2B0E.toInt()
+                realisticModifierBasePaint.color = 0xFF241304.toInt()
+                realisticEnterFacePaint.color = 0xFFF59E0B.toInt()
+                realisticEnterBasePaint.color = 0xFFB45309.toInt()
+                realisticEnterPressedPaint.color = 0xFFD97706.toInt()
+                realisticShiftFacePaint.color = 0xFFF59E0B.toInt()
+                realisticShiftBasePaint.color = 0xFFB45309.toInt()
+                realisticShiftPressedPaint.color = 0xFFD97706.toInt()
+                realisticTextPaint.color = 0xFFFFF6DF.toInt()
+                realisticDropShadowPaint.color = 0x881A0B02.toInt()
+                realisticTopRimPaint.color = 0x66FDE68A.toInt()
+                realisticBaseBorderPaint.color = 0x44D97706.toInt()
+            }
+            "retro_1995" -> {
+                realisticTopFacePaint.color = 0xFFECE9D8.toInt()
+                realisticFacePressedPaint.color = 0xFFDDD9C8.toInt()
+                realisticBasePaint.color = 0xFF888478.toInt()
+                realisticModifierFacePaint.color = 0xFFD4D0C8.toInt()
+                realisticModifierBasePaint.color = 0xFF706C60.toInt()
+                realisticEnterFacePaint.color = 0xFF000080.toInt()
+                realisticEnterBasePaint.color = 0xFF000050.toInt()
+                realisticEnterPressedPaint.color = 0xFF000066.toInt()
+                realisticShiftFacePaint.color = 0xFF000080.toInt()
+                realisticShiftBasePaint.color = 0xFF000050.toInt()
+                realisticShiftPressedPaint.color = 0xFF000066.toInt()
+                realisticTextPaint.color = 0xFF111111.toInt()
+                realisticDropShadowPaint.color = 0x55000000.toInt()
+                realisticTopRimPaint.color = 0xCCFFFFFF.toInt()
+                realisticBaseBorderPaint.color = 0x66808080.toInt()
+            }
+            "ios_style" -> {
+                realisticTopFacePaint.color = 0xFFFFFFFF.toInt()
+                realisticFacePressedPaint.color = 0xFFE5E7EB.toInt()
+                realisticBasePaint.color = 0xFF9CA3AF.toInt()
+                realisticModifierFacePaint.color = 0xFFB0B6C2.toInt()
+                realisticModifierBasePaint.color = 0xFF848C9A.toInt()
+                realisticEnterFacePaint.color = 0xFF007AFF.toInt()
+                realisticEnterBasePaint.color = 0xFF0056B3.toInt()
+                realisticEnterPressedPaint.color = 0xFF0062CC.toInt()
+                realisticShiftFacePaint.color = 0xFF007AFF.toInt()
+                realisticShiftBasePaint.color = 0xFF0056B3.toInt()
+                realisticShiftPressedPaint.color = 0xFF0062CC.toInt()
+                realisticTextPaint.color = 0xFF000000.toInt()
+                realisticDropShadowPaint.color = 0x44000000.toInt()
+                realisticTopRimPaint.color = 0x22000000.toInt()
+                realisticBaseBorderPaint.color = 0x1A000000.toInt()
+            }
+            "amoled" -> {
+                realisticTopFacePaint.color = 0xFF18263A.toInt()
+                realisticFacePressedPaint.color = 0xFF121E2F.toInt()
+                realisticBasePaint.color = 0xFF0D1622.toInt()
+                realisticModifierFacePaint.color = 0xFF121C2B.toInt()
+                realisticModifierBasePaint.color = 0xFF090E17.toInt()
+                realisticEnterFacePaint.color = 0xFF00E5FF.toInt()
+                realisticEnterBasePaint.color = 0xFF009EB0.toInt()
+                realisticEnterPressedPaint.color = 0xFF00C4DA.toInt()
+                realisticShiftFacePaint.color = 0xFF00E5FF.toInt()
+                realisticShiftBasePaint.color = 0xFF009EB0.toInt()
+                realisticShiftPressedPaint.color = 0xFF00C4DA.toInt()
+                realisticTextPaint.color = 0xFFFFFFFF.toInt()
+                realisticDropShadowPaint.color = 0xAA000000.toInt()
+                realisticTopRimPaint.color = 0x3300E5FF.toInt()
+                realisticBaseBorderPaint.color = 0x2A5078A0.toInt()
+            }
+            else -> {
+                realisticTopFacePaint.color = theme.keyBackground
+                realisticFacePressedPaint.color = theme.keyModifierBackground
+                realisticBasePaint.color = theme.keyModifierBackground
+                realisticModifierFacePaint.color = theme.keyModifierBackground
+                realisticModifierBasePaint.color = theme.background
+                realisticEnterFacePaint.color = theme.keyAccent
+                realisticEnterBasePaint.color = theme.keyAccent
+                realisticEnterPressedPaint.color = theme.keyAccent
+                realisticShiftFacePaint.color = theme.keyAccent
+                realisticShiftBasePaint.color = theme.keyAccent
+                realisticShiftPressedPaint.color = theme.keyAccent
+                realisticTextPaint.color = theme.keyText
+                realisticDropShadowPaint.color = 0x66000000.toInt()
+                realisticTopRimPaint.color = 0x22FFFFFF.toInt()
+                realisticBaseBorderPaint.color = 0x1A000000.toInt()
+            }
+        }
+    }
+
+    companion object {
+        private val HIDDEN_HINT_TEXTS = setOf(
+            "é", "è", "ê", "ë", "ē", "ę",
+            "ý", "ÿ",
+            "ú", "ù", "û", "ü", "ū",
+            "í", "ì", "î", "ï", "ī",
+            "ó", "ò", "ô", "ö", "õ", "ø", "œ", "ō",
+            "ł",
+            "á", "à", "â", "ä", "ã", "å", "æ", "ā",
+            "ß", "ś", "š",
+            "đ",
+            "ž", "ź", "ż",
+            "ç", "ć", "č",
+            "ñ", "ń"
+        )
+        private val TYPEFACE_NORMAL: android.graphics.Typeface =
+            android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.NORMAL)
+        private val TYPEFACE_BOLD: android.graphics.Typeface =
+            android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+        private val NUMPAD_OP_KEYS = listOf(
+            Key("+", '+'.code),
+            Key("-", '-'.code),
+            Key("*", '*'.code),
+            Key("/", '/'.code),
+        )
+        private val NUMPAD_KEY_1 = Key("1", '1'.code)
+        private val NUMPAD_KEY_2 = Key("2", '2'.code)
+        private val NUMPAD_KEY_3 = Key("3", '3'.code)
+        private val NUMPAD_KEY_PERCENT = Key("%", '%'.code)
+        private val NUMPAD_KEY_4 = Key("4", '4'.code)
+        private val NUMPAD_KEY_5 = Key("5", '5'.code)
+        private val NUMPAD_KEY_6 = Key("6", '6'.code)
+        private val NUMPAD_KEY_SPACE = Key("␣", KC.SPACE)
+        private val NUMPAD_KEY_7 = Key("7", '7'.code)
+        private val NUMPAD_KEY_8 = Key("8", '8'.code)
+        private val NUMPAD_KEY_9 = Key("9", '9'.code)
+        private val NUMPAD_KEY_DELETE = Key("Delete", KC.DELETE, isModifier = true)
+        private val NUMPAD_KEY_ABC = Key("ABC", KC.ABC, isModifier = true)
+        private val NUMPAD_KEY_COMMA = Key(",", ','.code)
+        private val NUMPAD_KEY_SYMBOLS = Key("!?#", KC.SHIFT_SYMBOLS, isModifier = true)
+        private val NUMPAD_KEY_0 = Key("0", '0'.code)
+        private val NUMPAD_KEY_EQUALS = Key("=", '='.code)
+        private val NUMPAD_KEY_PERIOD = Key(".", '.'.code)
+        private val NUMPAD_KEY_ENTER = Key("Enter", KC.ENTER, isModifier = true)
+        const val TOOLBAR_HEIGHT_DP = 44f
+    }
+
+    private var onKeyListener: ((Int, String) -> Unit)? = null
+    private var onGlideListener: ((String) -> Unit)? = null
+    private var suggestions: List<String> = emptyList()
+    private var shiftActive = false
+    private var predictionEnabled = true
+    private var toolbarVisible = true
+    private var glideEnabled = settings.glideEnabled
+    private var keyHeightDp = settings.keyHeightDp
+    private var glideDecoder = GlideDecoder(wordList, userDict)
+    
+    // Compute layout with number row if enabled
+    private var effectiveLayout: KeyLayout = if (keyLayout.id == "numpad" || keyLayout.id.startsWith("symbols")) {
+        keyLayout
+    } else if (settings.numberRow) {
+        // Prepend number row to the layout
+        val numberRow = (1..10).map { i ->
+            val ch = if (i == 10) '0' else (i + 48).toChar()
+            Key(ch.toString(), ch.code)
+        }
+        KeyLayout(
+            keyLayout.id + "_with_numbers",
+            listOf(numberRow) + keyLayout.rows
+        )
+    } else {
+        keyLayout
+    }
+
+    private val keyBounds = mutableMapOf<Key, Rect>()
+    private val keyHitBounds = mutableMapOf<Key, Rect>()
+    private val pointerKeys = mutableMapOf<Int, Key>()
+    private val pointerDownX = mutableMapOf<Int, Float>()
+    private val pointerDownY = mutableMapOf<Int, Float>()
+
+    private fun commitKey(key: Key) {
+        if (key.label == "لا" && isLamAlefPopupVisible) {
+            return
+        }
+        onKeyListener?.invoke(key.code, key.label)
+        try {
+            if (settings.hapticFeedback && !isPowerSaveMode) {
+                performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+            }
+        } catch (_: Exception) {}
+    }
+    private val keyPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        textSize = 18f
+    }
+    private val keyOutline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1f
+        color = theme.keyAccent
+    }
+    private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        textSize = 24f
+        color = theme.keyText
+        typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.NORMAL)
+    }
+    private val suggestionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        textSize = 14f
+        color = theme.suggestionText
+    }
+    private val hintPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        color = 0xFF8A909D.toInt()
+        typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.NORMAL)
+    }
+    private val keyBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1f
+        color = 0x2A5078A0.toInt()
+    }
+    
+    // Additional Paint objects (allocated once, reused per frame)
+    private val suggestionBgPaint = Paint().apply { color = theme.suggestionBg }
+    private val pillPaint = Paint().apply { 
+        style = Paint.Style.FILL
+        color = theme.keyBackground
+    }
+    private val pillBorderPaint = Paint().apply { 
+        style = Paint.Style.STROKE
+        strokeWidth = 1f
+        color = theme.keyAccent
+        alpha = 90
+    }
+    private val previewPaint = Paint().apply {
+        textSize = 10f
+        color = theme.suggestionText
+        alpha = 180
+    }
+    private val trailPaint = Paint().apply {
+        strokeWidth = 6f
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+        color = theme.gestureTrail
+    }
+    private val ripplePaint = Paint().apply {
+        style = Paint.Style.FILL
+        color = theme.keyAccent
+    }
+    private val keyModifierBgPaint = Paint().apply { color = theme.keyModifierBackground }
+    private val keyBgPaint = Paint().apply { color = theme.keyBackground }
+    private val shiftHighlightPaint = Paint().apply {
+        color = theme.keyAccent
+        style = Paint.Style.STROKE
+        strokeWidth = 3f
+    }
+    private val toolbarBarRect = RectF()
+    private val toolbarBarBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF050B14.toInt()
+        style = Paint.Style.FILL
+    }
+    private val toolbarBarBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF00E5FF.toInt()
+        style = Paint.Style.STROKE
+    }
+    private val toolbarDividerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF00E5FF.toInt()
+        strokeCap = Paint.Cap.ROUND
+    }
+    private val voiceActiveBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x33EF4444.toInt()
+        style = Paint.Style.FILL
+    }
+    private val numpadSpacePath = android.graphics.Path()
+    private val numpadSpacePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
+    private val popupCardBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF1C222B.toInt()
+        style = Paint.Style.FILL
+    }
+    private val popupCardBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+    }
+    private val popupNormalBtnPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+    }
+    private val popupPressedBtnPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+    }
+    private val popupCloseBtnPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF3F1D22.toInt()
+        style = Paint.Style.FILL
+    }
+    private val popupBtnBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x22FFFFFF
+        style = Paint.Style.STROKE
+    }
+    private val popupTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        typeface = TYPEFACE_BOLD
+    }
+    private val clipboardIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_content_paste)
+        ?.mutate()
+        ?.apply { setTint(theme.keyText) }
+    private val shiftIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_keyboard_capslock)?.mutate()
+    private val deleteIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_backspace)?.mutate()
+    private val enterIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_keyboard_return)?.mutate()
+    private val emojiIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_sentiment_satisfied)?.mutate()
+    private val languageIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_language)?.mutate()
+    private val settingsIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_settings)?.mutate()
+    private val micIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_mic)?.mutate()
+    private val audioWaveIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_audio_wave)?.mutate()
+    private val textCursorIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_text_cursor)?.mutate()
+    private val hideIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_keyboard_arrow_down)?.mutate()
+    private val hubMonogramIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_hub_monogram)?.mutate()
+    private val numpadEnterIcon = AppCompatResources.getDrawable(ctx, R.drawable.ic_numpad_return)?.mutate()
+    private val toolbarBounds = mutableMapOf<String, Rect>()
+
+    var realisticKeys: Boolean = settings.realisticKeys
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    // Realistic 3D Squircle Keycap Paints & Geometry matching reference image exactly
+    private val realisticKeyShadowRect = RectF()
+    private val realisticKeyBaseRect = RectF()
+    private val realisticKeyFaceRect = RectF()
+
+    private val realisticDropShadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x55030712.toInt()
+        style = Paint.Style.FILL
+    }
+    private val realisticBasePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFD0D5E0.toInt()
+        style = Paint.Style.FILL
+    }
+    private val realisticBaseBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x18000000.toInt()
+        style = Paint.Style.STROKE
+        strokeWidth = 0.8f
+    }
+    private val realisticTopFacePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFFFFFFF.toInt()
+        style = Paint.Style.FILL
+    }
+    private val realisticFacePressedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFE2E7F0.toInt()
+        style = Paint.Style.FILL
+    }
+    private val realisticModifierFacePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFF1F5F9.toInt()
+        style = Paint.Style.FILL
+    }
+    private val realisticModifierBasePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFCBD5E1.toInt()
+        style = Paint.Style.FILL
+    }
+    private val realisticEnterFacePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF8B5CF6.toInt()
+        style = Paint.Style.FILL
+    }
+    private val realisticEnterBasePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF6D28D9.toInt()
+        style = Paint.Style.FILL
+    }
+    private val realisticEnterPressedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF7C3AED.toInt()
+        style = Paint.Style.FILL
+    }
+    private val realisticShiftFacePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF00D2EE.toInt()
+        style = Paint.Style.FILL
+    }
+    private val realisticShiftBasePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF00A2BA.toInt()
+        style = Paint.Style.FILL
+    }
+    private val realisticShiftPressedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF00BBD4.toInt()
+        style = Paint.Style.FILL
+    }
+    private val realisticTopRimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0x60FFFFFF.toInt()
+        style = Paint.Style.STROKE
+        strokeWidth = 1f
+    }
+    private val realisticTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF0F172A.toInt()
+        textAlign = Paint.Align.CENTER
+        typeface = TYPEFACE_BOLD
+    }
+
+    init {
+        applyThemePaints()
+    }
+
+    var onHideKeyboard: (() -> Unit)? = null
+    var onOpenHub: (() -> Unit)? = null
+    var onOpenVoice: (() -> Unit)? = null
+    var onOpenTextEditing: (() -> Unit)? = null
+    var onOpenClipboard: (() -> Unit)? = null
+    var onHeightChanged: ((Int) -> Unit)? = null
+
+    var isResizeMode = false
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    var isVoiceListening = false
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    var isPowerSaveMode = settings.powerSaveMode
+        set(value) {
+            field = value
+            if (value) {
+                ripples.clear()
+                glideTrail.clear()
+            }
+            invalidate()
+        }
+
+    private val resizeMinusBounds = Rect()
+    private val resizePlusBounds = Rect()
+    private val resizeDoneBounds = Rect()
+
+    private var isGliding = false
+    private var glideStartTime = 0L
+    private val glideSamples = mutableListOf<GlideDecoder.Sample>()
+    private val suggestionBounds = mutableMapOf<String, Rect>()
+    
+    // Ripple effect tracking
+    private data class Ripple(val x: Float, val y: Float, val startTime: Long)
+    private val ripples = mutableListOf<Ripple>()
+    private val rippleAnimDuration = 400L
+    private val maxRipples = 20 // Cap concurrent ripples to prevent memory bloat
+    
+    // Glide trail gradient
+    private data class TrailPoint(val x: Float, val y: Float, val time: Long)
+    private val glideTrail = mutableListOf<TrailPoint>()
+    private val trailFadeMs = 300L
+
+    // Lam-Alef symbols & hamzas popup palette
+    private var isLamAlefPopupVisible = false
+    private val lamAlefPopupCardRect = RectF()
+    private val lamAlefPopupButtons = mutableMapOf<String, RectF>()
+    private var pressedPopupButton: String? = null
+    private val scrimPaint = Paint().apply {
+        color = 0xAA000000.toInt()
+        style = Paint.Style.FILL
+    }
+
+    private var longPressTriggered = false
+    private var touchDownX = 0f
+    private var touchDownY = 0f
+    private var downKey: Key? = null
+    private val longPressHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var longPressRunnable: Runnable? = null
+
+    // High-speed Delete key repetition & acceleration
+    private val deleteRepeatHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var deleteRepeatCount = 0
+    private var isDeleteActive = false
+
+    private val deleteRepeatRunnable = object : Runnable {
+        override fun run() {
+            if (!isDeleteActive) return
+            deleteRepeatCount++
+            onKeyListener?.invoke(KC.DELETE, "Delete")
+            try {
+                if (settings.hapticFeedback && !isPowerSaveMode && (deleteRepeatCount % 3 == 0 || deleteRepeatCount < 5)) {
+                    performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+                }
+            } catch (_: Exception) {}
+
+            // Accelerating repeat rate for super fast deletion
+            val interval = when {
+                deleteRepeatCount > 15 -> 12L // ~80+ deletes per second (ultra-fast)
+                deleteRepeatCount > 6 -> 20L  // ~50 deletes per second
+                else -> 32L                   // Initial rapid repetition
+            }
+            deleteRepeatHandler.postDelayed(this, interval)
+        }
+    }
+
+    private fun stopDeleteRepeat() {
+        isDeleteActive = false
+        deleteRepeatHandler.removeCallbacks(deleteRepeatRunnable)
+        deleteRepeatCount = 0
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val w = MeasureSpec.getSize(widthMeasureSpec)
+        val density = resources.displayMetrics.density
+        
+        // Mirror the drawing path exactly so the final row is never clipped.
+        val keyHeightPx = keyHeightDp * density
+        val numRows = if (effectiveLayout.id == "numpad") 4 else effectiveLayout.rows.size // includes number row if enabled
+        val rowSpacingPx = 4.2f * density
+        val suggestionHeight = if (toolbarVisible || predictionEnabled) {
+            (2f * density) + (TOOLBAR_HEIGHT_DP * density) + (4f * density)
+        } else {
+            0f
+        }
+        val rowsHeight = (keyHeightPx * numRows) +
+            (rowSpacingPx * (numRows - 1).coerceAtLeast(0))
+        val h = ceil(suggestionHeight + rowsHeight).toInt()
+        
+        setMeasuredDimension(w, h)
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        val keyboardBg = theme.background
+        canvas.drawColor(keyboardBg)
+
+        val w = width.toFloat()
+        val h = height.toFloat()
+        val density = resources.displayMetrics.density
+        
+        // Calculate key height in pixels (contract: keyHeightPx * 0.82f)
+        val keyHeightPx = keyHeightDp * density
+        val suggestionHeightPx = TOOLBAR_HEIGHT_DP * density
+        val rowSpacingPx = 4.2f * density
+        val keyPadding = 2.8f * density
+        val keyCornerRadius = 6f * density
+        val effectiveKeyRadius = 13f * density
+
+        // Determine base text size matching the fitted size of wide keys like 'ص', 'ض', 'س', 'ش'
+        val letterKeyCount = if (effectiveLayout.id.startsWith("arabic")) 11f else 10f
+        val standardKeyWidth = w / letterKeyCount
+        val standardAvailableWidth = (standardKeyWidth - (keyPadding * 2) - (8f * density)).coerceAtLeast(1f)
+
+        // Measure 'ص' at reference 100f to find the exact proportional text size where it fits neatly
+        textPaint.textSize = 100f
+        val sampleSadWidth = textPaint.measureText("ص")
+        val sadFittedTextSize = if (sampleSadWidth > 0f) {
+            100f * (standardAvailableWidth / sampleSadWidth)
+        } else {
+            keyHeightPx * 0.30f
+        }
+        val baseButtonTextSize = sadFittedTextSize.coerceIn(keyHeightPx * 0.22f, keyHeightPx * 0.33f)
+
+        // Scale typography with the uniform button text size
+        textPaint.textSize = baseButtonTextSize
+        suggestionPaint.textSize = keyHeightPx * 0.30f
+        previewPaint.textSize = (keyHeightPx * 0.18f)
+        
+        // Draw suggestions row as pills with preview or toolbar icons
+        var y = 0f
+        suggestionBounds.clear()
+        toolbarBounds.clear()
+
+        if (toolbarVisible || predictionEnabled) {
+            y = 2f * density // compact top padding
+            canvas.drawRect(0f, 0f, w, y + suggestionHeightPx, suggestionBgPaint)
+
+            val showWordSuggestions = false
+            if (showWordSuggestions && suggestions.isNotEmpty()) {
+                val outerPadding = 10f * density
+                val pillGap = 8f * density
+                val pillWidth = (w - (outerPadding * 2f) - (pillGap * 2f)) / 3f
+
+                suggestions.take(3).forEachIndexed { index, sugg ->
+                    val x = outerPadding + (index * (pillWidth + pillGap))
+                    val pillHeight = suggestionHeightPx - (8f * density)
+                    val pillRadius = minOf(12f * density, pillHeight / 2f)
+                    val pillY = y + (4f * density)
+
+                    val rect = Rect(
+                        x.toInt(),
+                        pillY.toInt(),
+                        (x + pillWidth).toInt(),
+                        (pillY + pillHeight).toInt(),
+                    )
+                    suggestionBounds[sugg] = rect
+
+                    canvas.drawRoundRect(
+                        x, pillY, x + pillWidth, pillY + pillHeight,
+                        pillRadius, pillRadius,
+                        pillPaint
+                    )
+
+                    canvas.drawRoundRect(
+                        x, pillY, x + pillWidth, pillY + pillHeight,
+                        pillRadius, pillRadius,
+                        pillBorderPaint
+                    )
+
+                    val textY = pillY + (pillHeight / 2f) -
+                        ((suggestionPaint.ascent() + suggestionPaint.descent()) / 2f)
+                    canvas.drawText(sugg, x + pillWidth / 2f, textY, suggestionPaint)
+                }
+            } else if (isResizeMode) {
+                val btnHeight = suggestionHeightPx - (8f * density)
+                val btnTop = y + (4f * density)
+                val btnBottom = btnTop + btnHeight
+                val btnMargin = 8f * density
+
+                // Done button on left [ تم ✓ ]
+                val doneWidth = 60f * density
+                resizeDoneBounds.set(btnMargin.toInt(), btnTop.toInt(), (btnMargin + doneWidth).toInt(), btnBottom.toInt())
+                canvas.drawRoundRect(btnMargin, btnTop, btnMargin + doneWidth, btnBottom, 6f * density, 6f * density, pillPaint)
+                canvas.drawRoundRect(btnMargin, btnTop, btnMargin + doneWidth, btnBottom, 6f * density, 6f * density, pillBorderPaint)
+                val doneTextY = resizeDoneBounds.centerY() - ((suggestionPaint.ascent() + suggestionPaint.descent()) / 2f)
+                canvas.drawText("تم ✓", resizeDoneBounds.centerX().toFloat(), doneTextY, suggestionPaint)
+
+                // Plus button on right [ + ]
+                val stepBtnWidth = 42f * density
+                val plusLeft = w - btnMargin - stepBtnWidth
+                resizePlusBounds.set(plusLeft.toInt(), btnTop.toInt(), (plusLeft + stepBtnWidth).toInt(), btnBottom.toInt())
+                canvas.drawRoundRect(plusLeft, btnTop, plusLeft + stepBtnWidth, btnBottom, 6f * density, 6f * density, pillPaint)
+                canvas.drawRoundRect(plusLeft, btnTop, plusLeft + stepBtnWidth, btnBottom, 6f * density, 6f * density, pillBorderPaint)
+                val plusTextY = resizePlusBounds.centerY() - ((textPaint.ascent() + textPaint.descent()) / 2f)
+                canvas.drawText("+", resizePlusBounds.centerX().toFloat(), plusTextY, textPaint)
+
+                // Minus button next to plus [ - ]
+                val minusLeft = plusLeft - btnMargin - stepBtnWidth
+                resizeMinusBounds.set(minusLeft.toInt(), btnTop.toInt(), (minusLeft + stepBtnWidth).toInt(), btnBottom.toInt())
+                canvas.drawRoundRect(minusLeft, btnTop, minusLeft + stepBtnWidth, btnBottom, 6f * density, 6f * density, pillPaint)
+                canvas.drawRoundRect(minusLeft, btnTop, minusLeft + stepBtnWidth, btnBottom, 6f * density, 6f * density, pillBorderPaint)
+                val minusTextY = resizeMinusBounds.centerY() - ((textPaint.ascent() + textPaint.descent()) / 2f)
+                canvas.drawText("-", resizeMinusBounds.centerX().toFloat(), minusTextY, textPaint)
+
+                // Center indicator label
+                val labelLeft = btnMargin + doneWidth + (4f * density)
+                val labelRight = minusLeft - (4f * density)
+                val labelCenter = (labelLeft + labelRight) / 2f
+                val heightDesc = when {
+                    keyHeightDp <= 58 -> "صغير"
+                    keyHeightDp <= 68 -> "متوسط"
+                    keyHeightDp <= 78 -> "مرتفع"
+                    keyHeightDp <= 88 -> "كبير"
+                    else -> "كبير جداً"
+                }
+                val labelText = "الارتفاع: $heightDesc ($keyHeightDp dp)"
+                val labelY = resizeDoneBounds.centerY() - ((suggestionPaint.ascent() + suggestionPaint.descent()) / 2f)
+                canvas.drawText(labelText, labelCenter, labelY, suggestionPaint)
+            } else {
+                // Toolbar icons enclosed in neon cyan rounded frame with vertical dividers matching screenshot
+                val barMarginH = 4f * density
+                val barTop = y + (1f * density)
+                val barHeight = suggestionHeightPx - (2f * density)
+                val barBottom = barTop + barHeight
+                val barRadius = 12f * density
+                toolbarBarRect.set(barMarginH, barTop, w - barMarginH, barBottom)
+
+                // Fill toolbar background matching active theme
+                toolbarBarBgPaint.color = when (theme.id) {
+                    "retro_1995" -> 0xFFB4B0A2.toInt()
+                    "ios_style" -> 0xFFC0C5CF.toInt()
+                    "honey_3d" -> 0xFF140B04.toInt()
+                    else -> 0xFF050B14.toInt()
+                }
+                toolbarBarBorderPaint.color = theme.keyAccent
+                toolbarBarBorderPaint.strokeWidth = if (theme.id == "ios_style") 1.2f * density else 2.2f * density
+                toolbarDividerPaint.color = theme.keyAccent
+                toolbarDividerPaint.strokeWidth = 1.5f * density
+                toolbarDividerPaint.alpha = 100
+                canvas.drawRoundRect(toolbarBarRect, barRadius, barRadius, toolbarBarBgPaint)
+                canvas.drawRoundRect(toolbarBarRect, barRadius, barRadius, toolbarBarBorderPaint)
+
+                val icons = listOf(
+                    "hub" to (hubMonogramIcon ?: audioWaveIcon ?: micIcon),
+                    "emoji" to (emojiIcon ?: languageIcon),
+                    "voice" to micIcon,
+                    "cursor" to textCursorIcon,
+                    "clipboard" to clipboardIcon,
+                    "hide" to hideIcon,
+                )
+                val iconCount = icons.size
+                val slotWidth = toolbarBarRect.width() / iconCount.toFloat()
+
+                // Divider lines between slots
+                toolbarDividerPaint.strokeWidth = 1.5f * density
+                val dividerHalfH = 10.5f * density
+                val dividerCenterY = toolbarBarRect.centerY()
+                for (i in 1 until iconCount) {
+                    val divX = toolbarBarRect.left + (i * slotWidth)
+                    canvas.drawLine(divX, dividerCenterY - dividerHalfH, divX, dividerCenterY + dividerHalfH, toolbarDividerPaint)
+                }
+
+                icons.forEachIndexed { index, (action, drawable) ->
+                    if (drawable != null) {
+                        val centerX = toolbarBarRect.left + (index * slotWidth) + (slotWidth / 2f)
+                        val centerY = toolbarBarRect.centerY()
+                        val iconW: Float
+                        val iconH: Float
+                        when (action) {
+                            "hide" -> {
+                                iconW = 27f * density
+                                iconH = 25f * density
+                            }
+                            "cursor" -> {
+                                iconW = 26f * density
+                                iconH = 24f * density
+                            }
+                            "emoji" -> {
+                                iconW = 23f * density
+                                iconH = 23f * density
+                            }
+                            "voice" -> {
+                                iconW = 23f * density
+                                iconH = 23f * density
+                            }
+                            "clipboard" -> {
+                                iconW = 22f * density
+                                iconH = 22f * density
+                            }
+                            "hub" -> {
+                                iconW = 22f * density
+                                iconH = 22f * density
+                            }
+                            else -> {
+                                iconW = 22f * density
+                                iconH = 22f * density
+                            }
+                        }
+
+                        val iconLeft = (centerX - (iconW / 2f)).toInt()
+                        val iconTop = (centerY - (iconH / 2f)).toInt()
+                        val iconRight = (centerX + (iconW / 2f)).toInt()
+                        val iconBottom = (centerY + (iconH / 2f)).toInt()
+
+                        val hitRect = Rect(
+                            (toolbarBarRect.left + (index * slotWidth)).toInt(),
+                            barTop.toInt(),
+                            (toolbarBarRect.left + ((index + 1) * slotWidth)).toInt(),
+                            barBottom.toInt()
+                        )
+                        toolbarBounds[action] = hitRect
+                        if (action == "voice" && isVoiceListening) {
+                            canvas.drawCircle(centerX, centerY, iconW * 0.85f, voiceActiveBgPaint)
+                            drawable.setTint(0xFFEF4444.toInt())
+                        } else {
+                            drawable.setTint(theme.keyText)
+                        }
+                        drawable.setBounds(iconLeft, iconTop, iconRight, iconBottom)
+                        drawable.draw(canvas)
+                    }
+                }
+            }
+
+            y += suggestionHeightPx + (4f * density)
+        }
+
+        // Draw keyboard rows
+        keyBounds.clear()
+        keyHitBounds.clear()
+
+        if (effectiveLayout.id == "numpad") {
+            drawNumpad(canvas, w, y, density, keyHeightPx, rowSpacingPx)
+        } else {
+            for (row in effectiveLayout.rows) {
+                val totalWeight = row.sumOf { it.widthWeight.toDouble() }
+                var x2 = 0f
+                for (key in row) {
+                    val kw = (w.toDouble() / totalWeight) * key.widthWeight.toDouble()
+                    if (key.code == KC.SPACER) {
+                        x2 += kw.toFloat()
+                        continue
+                    }
+                    // Store bounds with padding applied (actual tappable area)
+                    val rect = Rect(
+                        (x2 + keyPadding).toInt(), 
+                        (y + keyPadding).toInt(), 
+                        (x2 + kw.toFloat() - keyPadding).toInt(), 
+                        (y + keyHeightPx - keyPadding).toInt()
+                    )
+                    keyBounds[key] = rect
+                    keyHitBounds[key] = Rect(x2.toInt(), y.toInt(), (x2 + kw.toFloat()).toInt(), (y + keyHeightPx).toInt())
+
+                    val textX = x2 + kw.toFloat() / 2f
+                    val displayLabel = if (key.code == KC.SPACE) {
+                        ""
+                    } else if (shiftActive && key.label.length == 1 && key.label[0].isLetter()) {
+                        key.label.uppercase()
+                    } else {
+                        key.label
+                    }
+
+                    val keyIcon = when {
+                        key.code == KC.ENTER && key.label == "تنفيذ" -> null
+                        key.code == KC.CLIPBOARD -> clipboardIcon
+                        key.code == KC.SHIFT -> shiftIcon
+                        key.code == KC.DELETE -> deleteIcon
+                        key.code == KC.ENTER -> enterIcon
+                        key.code == KC.SETTINGS -> settingsIcon
+                        else -> null
+                    }
+                    val isPressed = (downKey == key || pointerKeys.containsValue(key))
+
+                    if (realisticKeys) {
+                        drawRealisticKeycap(
+                            canvas = canvas,
+                            key = key,
+                            left = x2 + keyPadding,
+                            top = y + keyPadding,
+                            right = x2 + kw.toFloat() - keyPadding,
+                            bottom = y + keyHeightPx - keyPadding,
+                            displayLabel = displayLabel,
+                            keyIcon = keyIcon,
+                            density = density,
+                            keyHeightPx = keyHeightPx,
+                            baseButtonTextSize = baseButtonTextSize,
+                            isPressed = isPressed
+                        )
+                    } else {
+                        drawClassicKeycap(
+                            canvas = canvas,
+                            key = key,
+                            left = x2 + keyPadding,
+                            top = y + keyPadding,
+                            right = x2 + kw.toFloat() - keyPadding,
+                            bottom = y + keyHeightPx - keyPadding,
+                            kw = kw.toFloat(),
+                            y = y,
+                            textX = textX,
+                            displayLabel = displayLabel,
+                            keyIcon = keyIcon,
+                            density = density,
+                            keyHeightPx = keyHeightPx,
+                            keyPadding = keyPadding,
+                            effectiveKeyRadius = effectiveKeyRadius,
+                            baseButtonTextSize = baseButtonTextSize
+                        )
+                    }
+
+                    x2 += kw.toFloat()
+                }
+                y += keyHeightPx + rowSpacingPx
+            }
+        }
+
+        // Draw glide trail with fade gradient (skip if reduced motion or power save mode enabled)
+        if (!settings.reducedMotion && !isPowerSaveMode && glideTrail.isNotEmpty()) {
+            val now = System.currentTimeMillis()
+            while (glideTrail.isNotEmpty() && now - glideTrail.first().time >= trailFadeMs) {
+                glideTrail.removeAt(0)
+            }
+            if (glideTrail.size < 2 && !isGliding) {
+                glideTrail.clear()
+            } else {
+                for (i in 0 until glideTrail.size - 1) {
+                    val p1 = glideTrail[i]
+                    val p2 = glideTrail[i + 1]
+                    val age = (now - p1.time).toFloat().coerceAtLeast(0f)
+                    val progress = (age / trailFadeMs).coerceIn(0f, 1f)
+                    val alpha = ((1f - progress) * 255).toInt()
+                    trailPaint.color = theme.gestureTrail
+                    trailPaint.alpha = alpha
+                    canvas.drawLine(p1.x, p1.y, p2.x, p2.y, trailPaint)
+                }
+            }
+        } else if ((settings.reducedMotion || isPowerSaveMode) && glideTrail.isNotEmpty()) {
+            glideTrail.clear()
+        }
+
+        ripples.clear()
+        
+        if (!isPowerSaveMode && glideTrail.isNotEmpty()) {
+            postInvalidateOnAnimation()
+        }
+
+        if (isLamAlefPopupVisible) {
+            drawLamAlefPopup(canvas, w, h)
+        }
+    }
+
+    private fun drawRealisticKeycap(
+        canvas: Canvas,
+        key: Key,
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+        displayLabel: String,
+        keyIcon: android.graphics.drawable.Drawable?,
+        density: Float,
+        keyHeightPx: Float,
+        baseButtonTextSize: Float,
+        isPressed: Boolean
+    ) {
+        val width = right - left
+        val height = bottom - top
+        // Soft squircle corner radius matching the user's reference image
+        val radius = minOf(height * 0.28f, width * 0.28f, 13.5f * density)
+
+        val isEnter = (key.code == KC.ENTER)
+        val isShiftActive = (key.code == KC.SHIFT && shiftActive)
+
+        // 3D elevation and tactile travel parameters
+        val bevelHeight = if (isPressed) 1f * density else 2.6f * density
+        val topOffset = if (isPressed) 1.6f * density else 0f
+
+        // 1. Soft ambient drop shadow underneath key
+        if (!isPressed) {
+            val shadowOffset = 2.4f * density
+            realisticKeyShadowRect.set(left, top + shadowOffset, right, bottom + shadowOffset)
+            canvas.drawRoundRect(realisticKeyShadowRect, radius, radius, realisticDropShadowPaint)
+        }
+
+        // 2. Bottom base/bevel (the physical 3D side edge of the keycap)
+        realisticKeyBaseRect.set(left, top + bevelHeight, right, bottom)
+        val basePaint = when {
+            isEnter -> realisticEnterBasePaint
+            isShiftActive -> realisticShiftBasePaint
+            key.isModifier -> realisticModifierBasePaint
+            else -> realisticBasePaint
+        }
+        canvas.drawRoundRect(realisticKeyBaseRect, radius, radius, basePaint)
+
+        // 3. Top face of the keycap (pristine white squircle matching image)
+        val faceTop = top + topOffset
+        val faceBottom = bottom - bevelHeight + topOffset
+        realisticKeyFaceRect.set(left, faceTop, right, faceBottom)
+
+        val facePaint = when {
+            isPressed && isEnter -> realisticEnterPressedPaint
+            isEnter -> realisticEnterFacePaint
+            isPressed && isShiftActive -> realisticShiftPressedPaint
+            isShiftActive -> realisticShiftFacePaint
+            isPressed -> realisticFacePressedPaint
+            key.isModifier -> realisticModifierFacePaint
+            else -> realisticTopFacePaint
+        }
+        canvas.drawRoundRect(realisticKeyFaceRect, radius, radius, facePaint)
+
+        // 4. Subtle top rim highlight and outer edge line for crispness
+        canvas.drawRoundRect(realisticKeyFaceRect, radius, radius, realisticTopRimPaint)
+        canvas.drawRoundRect(realisticKeyFaceRect, radius, radius, realisticBaseBorderPaint)
+
+        // 5. Glyph / Icon rendering
+        val centerX = (left + right) / 2f
+        val centerY = (faceTop + faceBottom) / 2f
+
+        val glyphColor = when {
+            isEnter -> 0xFFFFFFFF.toInt()
+            isShiftActive -> 0xFFFFFFFF.toInt()
+            else -> realisticTextPaint.color
+        }
+
+        if (keyIcon != null) {
+            val iconSize = (height * 0.40f).toInt()
+            val iconLeft = (centerX - (iconSize / 2f)).toInt()
+            val iconTop = (centerY - (iconSize / 2f)).toInt()
+            keyIcon.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize)
+            keyIcon.setTint(glyphColor)
+            keyIcon.draw(canvas)
+        } else if (displayLabel.isNotEmpty()) {
+            realisticTextPaint.color = glyphColor
+            val textSize = if (displayLabel.length > 2) {
+                baseButtonTextSize * 0.72f
+            } else if (displayLabel.length == 1 && (displayLabel[0] in 'ء'..'ي' || displayLabel == "لا")) {
+                baseButtonTextSize * 1.05f
+            } else {
+                baseButtonTextSize
+            }
+            realisticTextPaint.textSize = textSize
+            val baseline = centerY - ((realisticTextPaint.ascent() + realisticTextPaint.descent()) / 2f)
+            canvas.drawText(displayLabel, centerX, baseline, realisticTextPaint)
+        }
+    }
+
+    private fun drawClassicKeycap(
+        canvas: Canvas,
+        key: Key,
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+        kw: Float,
+        y: Float,
+        textX: Float,
+        displayLabel: String,
+        keyIcon: android.graphics.drawable.Drawable?,
+        density: Float,
+        keyHeightPx: Float,
+        keyPadding: Float,
+        effectiveKeyRadius: Float,
+        baseButtonTextSize: Float
+    ) {
+        val isPressed = (downKey == key || pointerKeys.containsValue(key))
+        val isShiftActive = (key.code == KC.SHIFT && shiftActive)
+
+        val bgPaint = when {
+            isPressed -> ripplePaint
+            isShiftActive -> keyModifierBgPaint
+            key.isModifier -> keyModifierBgPaint
+            else -> keyBgPaint
+        }
+        canvas.drawRoundRect(left, top, right, bottom, effectiveKeyRadius, effectiveKeyRadius, bgPaint)
+
+        val borderPaint = if (isShiftActive) shiftHighlightPaint else keyBorderPaint
+        canvas.drawRoundRect(left, top, right, bottom, effectiveKeyRadius, effectiveKeyRadius, borderPaint)
+
+        val centerY = (top + bottom) / 2f
+        if (keyIcon != null) {
+            val iconSize = ((bottom - top) * 0.40f).toInt()
+            val iconLeft = (textX - (iconSize / 2f)).toInt()
+            val iconTop = (centerY - (iconSize / 2f)).toInt()
+            keyIcon.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize)
+            keyIcon.setTint(if (isShiftActive) theme.keyAccent else theme.keyText)
+            keyIcon.draw(canvas)
+        } else if (displayLabel.isNotEmpty()) {
+            textPaint.color = if (isShiftActive) theme.keyAccent else theme.keyText
+            textPaint.textSize = if (displayLabel.length > 2) baseButtonTextSize * 0.72f else baseButtonTextSize
+            val baseline = centerY - ((textPaint.ascent() + textPaint.descent()) / 2f)
+            canvas.drawText(displayLabel, textX, baseline, textPaint)
+        }
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (isLamAlefPopupVisible) {
+            handleLamAlefPopupTouch(event)
+            return true
+        }
+
+        val density = resources.displayMetrics.density
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                glideStartTime = System.currentTimeMillis()
+                isGliding = false
+                glideSamples.clear()
+                glideTrail.clear()
+                touchDownX = event.x
+                touchDownY = event.y
+                longPressTriggered = false
+                pointerKeys.clear()
+                pointerDownX.clear()
+                pointerDownY.clear()
+
+                val pointerId = event.getPointerId(0)
+                val pressedKey = findKeyAt(event.x, event.y)
+                downKey = pressedKey
+                if (pressedKey != null) {
+                    pointerKeys[pointerId] = pressedKey
+                    pointerDownX[pointerId] = event.x
+                    pointerDownY[pointerId] = event.y
+                }
+
+                if (pressedKey != null && pressedKey.code == KC.DELETE) {
+                    isDeleteActive = true
+                    deleteRepeatCount = 0
+                    // Delete immediately on touch down for instant zero-lag response!
+                    commitKey(pressedKey)
+                    invalidate()
+                    deleteRepeatHandler.postDelayed(deleteRepeatRunnable, 180L)
+                    return true
+                }
+
+                if (pressedKey != null && pressedKey.label == "لا") {
+                    longPressRunnable = Runnable {
+                        longPressTriggered = true
+                        isGliding = false
+                        glideSamples.clear()
+                        isLamAlefPopupVisible = true
+                        invalidate()
+                        try {
+                            if (settings.hapticFeedback && !isPowerSaveMode) {
+                                performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                            }
+                        } catch (_: Exception) {}
+                    }
+                    longPressHandler.postDelayed(longPressRunnable!!, 320L)
+                } else if (pressedKey != null && pressedKey.popup.isNotEmpty() && !pressedKey.isModifier) {
+                    val isLatinLetter = (pressedKey.code in 'a'.code..'z'.code) || (pressedKey.code in 'A'.code..'Z'.code) || (pressedKey.label.length == 1 && pressedKey.label[0].lowercaseChar() in 'a'..'z')
+                    val popupTarget = pressedKey.popup.firstOrNull()
+                    if (!isLatinLetter && popupTarget != null && popupTarget.isNotEmpty() && popupTarget !in HIDDEN_HINT_TEXTS && popupTarget.lowercase() !in HIDDEN_HINT_TEXTS) {
+                        longPressRunnable = Runnable {
+                            longPressTriggered = true
+                            isGliding = false
+                            glideSamples.clear()
+                            onKeyListener?.invoke(popupTarget.first().code, popupTarget)
+                            try {
+                                if (settings.hapticFeedback && !isPowerSaveMode) {
+                                    performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                                }
+                            } catch (_: Exception) {}
+                        }
+                        longPressHandler.postDelayed(longPressRunnable!!, 360L)
+                    }
+                }
+                
+                // Immediate visual update without battery-draining continuous animation loops
+                invalidate()
+                
+                val sample = sampleAt(event.x, event.y)
+                if (sample.char != ' ') glideSamples.add(sample)
+                return true
+            }
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                val index = event.actionIndex
+                val pid = event.getPointerId(index)
+                val px = event.getX(index)
+                val py = event.getY(index)
+                val newKey = findKeyAt(px, py)
+
+                // High-speed two-thumb rolling typing: commit previous finger's key immediately!
+                longPressRunnable?.let { longPressHandler.removeCallbacks(it) }
+                for ((otherId, pKey) in pointerKeys.toMap()) {
+                    if (otherId != pid && !isGliding && !longPressTriggered && pKey.code != KC.DELETE) {
+                        commitKey(pKey)
+                        pointerKeys.remove(otherId)
+                    }
+                }
+
+                if (newKey != null) {
+                    pointerKeys[pid] = newKey
+                    pointerDownX[pid] = px
+                    pointerDownY[pid] = py
+                }
+
+                if (newKey != null && newKey.code == KC.DELETE) {
+                    isDeleteActive = true
+                    deleteRepeatCount = 0
+                    commitKey(newKey)
+                    deleteRepeatHandler.postDelayed(deleteRepeatRunnable, 180L)
+                }
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (isDeleteActive) {
+                    val dist = kotlin.math.hypot(event.x - touchDownX, event.y - touchDownY)
+                    // Generous touch slop so natural finger movement doesn't cancel deletion
+                    if (dist > 42f * density) {
+                        stopDeleteRepeat()
+                    }
+                    return true
+                }
+
+                val moveDist = kotlin.math.hypot(event.x - touchDownX, event.y - touchDownY)
+                val glideThreshold = 22f * density
+
+                if (moveDist > 12f * density) {
+                    longPressRunnable?.let { longPressHandler.removeCallbacks(it) }
+                }
+
+                // Glide ONLY starts if finger has moved a significant distance (distance-based, NOT time-based!)
+                if (!isGliding && glideEnabled && moveDist > glideThreshold) {
+                    isGliding = true
+                }
+                if (isGliding) {
+                    val sample = sampleAt(event.x, event.y)
+                    if (sample.char != ' ' && (glideSamples.isEmpty() || sample.char != glideSamples.last().char)) {
+                        glideSamples.add(sample)
+                    }
+                    if (!isPowerSaveMode && !settings.reducedMotion) {
+                        // Append trail point for gradient fade
+                        glideTrail.add(TrailPoint(event.x, event.y, System.currentTimeMillis()))
+                        postInvalidateOnAnimation()
+                    }
+                }
+                return true
+            }
+            MotionEvent.ACTION_POINTER_UP -> {
+                val upIndex = event.actionIndex
+                val upId = event.getPointerId(upIndex)
+                val ux = event.getX(upIndex)
+                val uy = event.getY(upIndex)
+                val key = findKeyAt(ux, uy) ?: pointerKeys[upId]
+                if (key != null && !isGliding && !longPressTriggered && key.code != KC.DELETE) {
+                    commitKey(key)
+                }
+                pointerKeys.remove(upId)
+                pointerDownX.remove(upId)
+                pointerDownY.remove(upId)
+                return true
+            }
+            MotionEvent.ACTION_UP -> {
+                longPressRunnable?.let { longPressHandler.removeCallbacks(it) }
+                val upPointerId = event.getPointerId(0)
+                val fallbackDownKey = pointerKeys[upPointerId] ?: downKey
+                pointerKeys.clear()
+                pointerDownX.clear()
+                pointerDownY.clear()
+
+                if (isDeleteActive) {
+                    stopDeleteRepeat()
+                    downKey = null
+                    return true
+                }
+                if (longPressTriggered) {
+                    isGliding = false
+                    glideSamples.clear()
+                    downKey = null
+                    invalidate()
+                    return true
+                }
+
+                if (isResizeMode) {
+                    val x = event.x.toInt()
+                    val y = event.y.toInt()
+                    if (resizePlusBounds.contains(x, y) || (x >= resizePlusBounds.left - 10 && x <= resizePlusBounds.right + 10 && y >= resizePlusBounds.top - 10 && y <= resizePlusBounds.bottom + 10)) {
+                        val newHeight = (keyHeightDp + 4).coerceAtMost(96)
+                        keyHeightDp = newHeight
+                        onHeightChanged?.invoke(newHeight)
+                        requestLayout()
+                        invalidate()
+                        return true
+                    } else if (resizeMinusBounds.contains(x, y) || (x >= resizeMinusBounds.left - 10 && x <= resizeMinusBounds.right + 10 && y >= resizeMinusBounds.top - 10 && y <= resizeMinusBounds.bottom + 10)) {
+                        val newHeight = (keyHeightDp - 4).coerceAtLeast(48)
+                        keyHeightDp = newHeight
+                        onHeightChanged?.invoke(newHeight)
+                        requestLayout()
+                        invalidate()
+                        return true
+                    } else if (resizeDoneBounds.contains(x, y) || (x >= resizeDoneBounds.left - 10 && x <= resizeDoneBounds.right + 10 && y >= resizeDoneBounds.top - 10 && y <= resizeDoneBounds.bottom + 10)) {
+                        isResizeMode = false
+                        onHeightChanged?.invoke(keyHeightDp)
+                        requestLayout()
+                        invalidate()
+                        return true
+                    }
+                }
+
+                // 1. Check toolbar icons first if tap was in toolbar area
+                var handledToolbar = false
+                for ((action, rect) in toolbarBounds) {
+                    if (rect.contains(event.x.toInt(), event.y.toInt())) {
+                        when (action) {
+                            "hub" -> onOpenHub?.invoke() ?: onKeyListener?.invoke(KC.SETTINGS, "Settings")
+                            "emoji" -> onKeyListener?.invoke(KC.EMOJI, "Emoji")
+                            "voice" -> onOpenVoice?.invoke() ?: onKeyListener?.invoke(KC.MIC, "Voice")
+                            "language" -> onKeyListener?.invoke(KC.LANGUAGE, "Language")
+                            "clipboard" -> onOpenClipboard?.invoke() ?: onKeyListener?.invoke(KC.CLIPBOARD, "Clipboard")
+                            "audio_wave", "mic" -> onOpenVoice?.invoke() ?: onOpenHub?.invoke()
+                            "cursor" -> onOpenTextEditing?.invoke() ?: onKeyListener?.invoke(KC.SETTINGS, "Settings")
+                            "hide" -> onHideKeyboard?.invoke()
+                        }
+                        handledToolbar = true
+                        break
+                    }
+                }
+                if (handledToolbar) {
+                    downKey = null
+                    isGliding = false
+                    glideSamples.clear()
+                    invalidate()
+                    return true
+                }
+
+                // 2. Check suggestions if predictionEnabled
+                if (predictionEnabled) {
+                    for ((sugg, rect) in suggestionBounds) {
+                        if (rect.contains(event.x.toInt(), event.y.toInt())) {
+                            onGlideListener?.invoke(sugg)
+                            downKey = null
+                            isGliding = false
+                            glideSamples.clear()
+                            invalidate()
+                            return true
+                        }
+                    }
+                }
+
+                if (isGliding && glideSamples.size >= 2) {
+                    val decoded = glideDecoder.decode(glideSamples)
+                    if (decoded.isNotEmpty()) {
+                        onGlideListener?.invoke(decoded.first())
+                    } else {
+                        // Fallback: commit tapped key so input is never dropped!
+                        val key = findKeyAt(event.x, event.y) ?: fallbackDownKey
+                        if (key != null) {
+                            commitKey(key)
+                        }
+                    }
+                } else if (!isGliding) {
+                    // Tap on a single key with fallback to downKey - INSTANT ZERO-LATENCY COMMIT!
+                    val key = findKeyAt(event.x, event.y) ?: fallbackDownKey
+                    if (key != null) {
+                        if (key.label == "لا") {
+                            isLamAlefPopupVisible = true
+                            invalidate()
+                            downKey = null
+                            return true
+                        }
+                        commitKey(key)
+                    }
+                }
+                downKey = null
+                isGliding = false
+                glideSamples.clear()
+                invalidate()
+                return true
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                longPressRunnable?.let { longPressHandler.removeCallbacks(it) }
+                stopDeleteRepeat()
+                downKey = null
+                pointerKeys.clear()
+                pointerDownX.clear()
+                pointerDownY.clear()
+                isGliding = false
+                glideSamples.clear()
+                invalidate()
+                return true
+            }
+        }
+        return super.onTouchEvent(event)
+    }
+
+    private fun findKeyAt(x: Float, y: Float): Key? {
+        val ix = x.toInt()
+        val iy = y.toInt()
+        // 1. Direct hit inside full key cell (covers 100% of row area, zero deadzone)
+        for ((key, rect) in keyHitBounds) {
+            if (rect.contains(ix, iy)) {
+                return key
+            }
+        }
+        // Fallback: padded key bounds
+        for ((key, rect) in keyBounds) {
+            if (rect.contains(ix, iy)) {
+                return key
+            }
+        }
+        // Do not snap to keyboard keys if tap was in toolbar or above keys
+        val topKeyY = keyHitBounds.values.firstOrNull()?.top ?: keyBounds.values.firstOrNull()?.top ?: 0
+        if (y < topKeyY - (4f * resources.displayMetrics.density)) {
+            return null
+        }
+        // 2. Proximity search: snap to closest key within tap radius so edge and padding taps never miss
+        val density = resources.displayMetrics.density
+        val maxReachSq = (28f * density) * (28f * density)
+        var closestKey: Key? = null
+        var minDistanceSq = Float.MAX_VALUE
+        for ((key, rect) in keyHitBounds) {
+            val cx = rect.centerX().toFloat()
+            val cy = rect.centerY().toFloat()
+            val dx = x - cx
+            val dy = y - cy
+            val distSq = dx * dx + dy * dy
+            if (distSq < minDistanceSq && distSq <= maxReachSq) {
+                minDistanceSq = distSq
+                closestKey = key
+            }
+        }
+        return closestKey
+    }
+
+    private fun sampleAt(x: Float, y: Float): GlideDecoder.Sample {
+        for ((key, rect) in keyBounds) {
+            if (rect.contains(x.toInt(), y.toInt())) {
+                // Use the actual label character, respecting shift state for letters
+                var char = key.label[0]
+                if (shiftActive && char.isLetter()) {
+                    char = char.uppercaseChar()
+                }
+                return GlideDecoder.Sample(char, x, y)
+            }
+        }
+        return GlideDecoder.Sample(' ', x, y)
+    }
+
+    fun setOnKeyListener(listener: (Int, String) -> Unit) {
+        onKeyListener = listener
+    }
+
+    fun setOnGlideListener(listener: (String) -> Unit) {
+        onGlideListener = listener
+    }
+
+    fun setSuggestions(sugg: List<String>) {
+        suggestions = emptyList()
+        suggestionBounds.clear()
+    }
+
+    fun setPredictionEnabled(enabled: Boolean) {
+        if (predictionEnabled == enabled) return
+        predictionEnabled = enabled
+        suggestions = emptyList()
+        suggestionBounds.clear()
+        if (!toolbarVisible) {
+            requestLayout()
+        }
+        invalidate()
+    }
+
+    fun setToolbarVisible(visible: Boolean) {
+        if (toolbarVisible == visible) return
+        toolbarVisible = visible
+        requestLayout()
+        invalidate()
+    }
+
+    fun isToolbarVisible(): Boolean = toolbarVisible
+
+    fun setInputProfile(predictionsEnabled: Boolean, glideEnabled: Boolean, keyHeightDp: Int) {
+        setPredictionEnabled(predictionsEnabled)
+        if (this.glideEnabled != glideEnabled) {
+            this.glideEnabled = glideEnabled
+            if (!glideEnabled) {
+                isGliding = false
+                glideSamples.clear()
+                glideTrail.clear()
+            }
+        }
+        if (this.keyHeightDp != keyHeightDp) {
+            this.keyHeightDp = keyHeightDp
+            requestLayout()
+        }
+        if (!predictionsEnabled && !glideEnabled) {
+            isGliding = false
+            glideSamples.clear()
+            glideTrail.clear()
+        }
+        invalidate()
+    }
+
+    fun setKeyHeightDp(heightDp: Int) {
+        if (this.keyHeightDp != heightDp) {
+            this.keyHeightDp = heightDp
+            requestLayout()
+            invalidate()
+        }
+    }
+
+    /**
+     * Calculates the exact pixel height of the keyboard view so all auxiliary views
+     * (Clipboard, Cursor/TextEditing, ToolsHub) match its exact height with zero jump.
+     */
+    fun getEffectiveHeightPx(): Int {
+        val density = resources.displayMetrics.density
+        val keyHeightPx = keyHeightDp * density
+        val numRows = if (effectiveLayout.id == "numpad") 4 else effectiveLayout.rows.size
+        val rowSpacingPx = 4.2f * density
+        val suggestionHeight = if (toolbarVisible || predictionEnabled) {
+            (2f * density) + (TOOLBAR_HEIGHT_DP * density) + (4f * density)
+        } else {
+            0f
+        }
+        val rowsHeight = (keyHeightPx * numRows) +
+            (rowSpacingPx * (numRows - 1).coerceAtLeast(0))
+        return ceil(suggestionHeight + rowsHeight).toInt()
+    }
+
+    fun setShift(active: Boolean) {
+        shiftActive = active
+        invalidate()
+    }
+
+    private fun drawNumpad(
+        canvas: Canvas,
+        w: Float,
+        yStart: Float,
+        density: Float,
+        keyHeightPx: Float,
+        rowSpacingPx: Float
+    ) {
+        val keyPadding = 2.5f * density
+        val keyCornerRadius = 6f * density
+
+        val col1Weight = 1.15f
+        val col2Weight = 2.0f
+        val col3Weight = 2.0f
+        val col4Weight = 2.0f
+        val col5Weight = 1.15f
+        val totalWeight = 8.3f
+
+        val col1Width = w * (col1Weight / totalWeight)
+        val col2Width = w * (col2Weight / totalWeight)
+        val col3Width = w * (col3Weight / totalWeight)
+        val col4Width = w * (col4Weight / totalWeight)
+        val col5Width = w * (col5Weight / totalWeight)
+
+        val xCol1 = 0f
+        val xCol2 = col1Width
+        val xCol3 = xCol2 + col2Width
+        val xCol4 = xCol3 + col3Width
+        val xCol5 = xCol4 + col4Width
+
+        val rows123Height = keyHeightPx * 3f + rowSpacingPx * 2f
+
+        fun drawKey(
+            key: Key,
+            left: Float,
+            top: Float,
+            right: Float,
+            bottom: Float,
+            label: String = key.label,
+            customBgColor: Int? = null,
+            customTextColor: Int? = null,
+            customRadius: Float = keyCornerRadius,
+            fontSizeRatio: Float = 0.44f
+        ) {
+            val rect = Rect(
+                (left + keyPadding).toInt(),
+                (top + keyPadding).toInt(),
+                (right - keyPadding).toInt(),
+                (bottom - keyPadding).toInt()
+            )
+            keyBounds[key] = rect
+            keyHitBounds[key] = Rect(left.toInt(), top.toInt(), right.toInt(), bottom.toInt())
+
+            val kLeft = left + keyPadding
+            val kTop = top + keyPadding
+            val kRight = right - keyPadding
+            val kBottom = bottom - keyPadding
+            val isPressed = (downKey == key || pointerKeys.containsValue(key))
+            val isEnter = (key.code == KC.ENTER)
+
+            if (realisticKeys) {
+                val bevel = if (isPressed) 1f * density else 2.5f * density
+                val tOffset = if (isPressed) 1.5f * density else 0f
+                val r = minOf((kBottom - kTop) * 0.28f, (kRight - kLeft) * 0.28f, 13f * density)
+
+                if (!isPressed) {
+                    realisticKeyShadowRect.set(kLeft, kTop + 2.2f * density, kRight, kBottom + 2.2f * density)
+                    canvas.drawRoundRect(realisticKeyShadowRect, r, r, realisticDropShadowPaint)
+                }
+
+                realisticKeyBaseRect.set(kLeft, kTop + bevel, kRight, kBottom)
+                val baseP = if (isEnter) realisticEnterBasePaint else if (key.isModifier) realisticModifierBasePaint else realisticBasePaint
+                canvas.drawRoundRect(realisticKeyBaseRect, r, r, baseP)
+
+                val faceTop = kTop + tOffset
+                val faceBottom = kBottom - bevel + tOffset
+                realisticKeyFaceRect.set(kLeft, faceTop, kRight, faceBottom)
+
+                val faceP = when {
+                    isPressed && isEnter -> realisticEnterPressedPaint
+                    isEnter -> realisticEnterFacePaint
+                    isPressed -> realisticFacePressedPaint
+                    key.isModifier -> realisticModifierFacePaint
+                    else -> realisticTopFacePaint
+                }
+                canvas.drawRoundRect(realisticKeyFaceRect, r, r, faceP)
+                canvas.drawRoundRect(realisticKeyFaceRect, r, r, realisticTopRimPaint)
+                canvas.drawRoundRect(realisticKeyFaceRect, r, r, realisticBaseBorderPaint)
+            } else {
+                val bg = customBgColor ?: if (key.isModifier) theme.keyModifierBackground else theme.keyBackground
+                keyBgPaint.color = bg
+                canvas.drawRoundRect(kLeft, kTop, kRight, kBottom, customRadius, customRadius, keyBgPaint)
+                canvas.drawRoundRect(kLeft, kTop, kRight, kBottom, customRadius, customRadius, keyBorderPaint)
+            }
+
+            val centerX = (left + right) / 2f
+            val centerY = (top + bottom) / 2f
+            val glyphColor = if (realisticKeys) {
+                if (isEnter) 0xFFFFFFFF.toInt() else realisticTextPaint.color
+            } else {
+                customTextColor ?: theme.keyText
+            }
+
+            when (key.code) {
+                KC.DELETE -> {
+                    deleteIcon?.let { icon ->
+                        val iconSize = ((bottom - top) * 0.44f).toInt()
+                        val iconLeft = (centerX - iconSize / 2f).toInt()
+                        val iconTop = (centerY - iconSize / 2f).toInt()
+                        icon.setTint(glyphColor)
+                        icon.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize)
+                        icon.draw(canvas)
+                    }
+                }
+                KC.ENTER -> {
+                    val icon = numpadEnterIcon ?: enterIcon
+                    icon?.let {
+                        val iconSize = ((bottom - top) * 0.46f).toInt()
+                        val iconLeft = (centerX - iconSize / 2f).toInt()
+                        val iconTop = (centerY - iconSize / 2f).toInt()
+                        it.setTint(glyphColor)
+                        it.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize)
+                        it.draw(canvas)
+                    }
+                }
+                KC.SPACE -> {
+                    val bracketW = (right - left) * 0.40f
+                    val bracketH = (bottom - top) * 0.16f
+                    val bLeft = centerX - bracketW / 2f
+                    val bRight = centerX + bracketW / 2f
+                    val bBottom = centerY + bracketH / 2f
+                    val bTop = centerY - bracketH / 2f
+
+                    numpadSpacePath.reset()
+                    numpadSpacePath.moveTo(bLeft, bTop)
+                    numpadSpacePath.lineTo(bLeft, bBottom)
+                    numpadSpacePath.lineTo(bRight, bBottom)
+                    numpadSpacePath.lineTo(bRight, bTop)
+                    numpadSpacePaint.color = glyphColor
+                    numpadSpacePaint.strokeWidth = 2.4f * density
+                    canvas.drawPath(numpadSpacePath, numpadSpacePaint)
+                }
+                else -> {
+                    textPaint.color = glyphColor
+                    textPaint.textSize = (bottom - top) * fontSizeRatio
+                    if (realisticKeys) textPaint.typeface = TYPEFACE_BOLD
+                    val baseline = centerY - ((textPaint.ascent() + textPaint.descent()) / 2f)
+                    canvas.drawText(label, centerX, baseline, textPaint)
+                }
+            }
+        }
+
+        // 1. Column 1: 4 operator keys (+, -, *, /) spanning rows123Height
+        val opHeight = (rows123Height - 3f * rowSpacingPx) / 4f
+        for (i in 0 until 4) {
+            val top = yStart + i * (opHeight + rowSpacingPx)
+            val bottom = top + opHeight
+            drawKey(NUMPAD_OP_KEYS[i], xCol1, top, xCol2, bottom, fontSizeRatio = 0.42f)
+        }
+
+        // 2. Rows 1, 2, 3: Numbers and side keys
+        val row1Y = yStart
+        val row2Y = yStart + keyHeightPx + rowSpacingPx
+        val row3Y = yStart + 2f * (keyHeightPx + rowSpacingPx)
+
+        // Row 1: 1, 2, 3, %
+        drawKey(NUMPAD_KEY_1, xCol2, row1Y, xCol3, row1Y + keyHeightPx, fontSizeRatio = 0.52f)
+        drawKey(NUMPAD_KEY_2, xCol3, row1Y, xCol4, row1Y + keyHeightPx, fontSizeRatio = 0.52f)
+        drawKey(NUMPAD_KEY_3, xCol4, row1Y, xCol5, row1Y + keyHeightPx, fontSizeRatio = 0.52f)
+        drawKey(NUMPAD_KEY_PERCENT, xCol5, row1Y, w, row1Y + keyHeightPx, fontSizeRatio = 0.42f)
+
+        // Row 2: 4, 5, 6, ␣
+        drawKey(NUMPAD_KEY_4, xCol2, row2Y, xCol3, row2Y + keyHeightPx, fontSizeRatio = 0.52f)
+        drawKey(NUMPAD_KEY_5, xCol3, row2Y, xCol4, row2Y + keyHeightPx, fontSizeRatio = 0.52f)
+        drawKey(NUMPAD_KEY_6, xCol4, row2Y, xCol5, row2Y + keyHeightPx, fontSizeRatio = 0.52f)
+        drawKey(NUMPAD_KEY_SPACE, xCol5, row2Y, w, row2Y + keyHeightPx)
+
+        // Row 3: 7, 8, 9, Delete
+        drawKey(NUMPAD_KEY_7, xCol2, row3Y, xCol3, row3Y + keyHeightPx, fontSizeRatio = 0.52f)
+        drawKey(NUMPAD_KEY_8, xCol3, row3Y, xCol4, row3Y + keyHeightPx, fontSizeRatio = 0.52f)
+        drawKey(NUMPAD_KEY_9, xCol4, row3Y, xCol5, row3Y + keyHeightPx, fontSizeRatio = 0.52f)
+        drawKey(NUMPAD_KEY_DELETE, xCol5, row3Y, w, row3Y + keyHeightPx)
+
+        // 3. Row 4 (Bottom Row): ABC, comma, !?#, 0, =, ., Enter
+        val row4Y = yStart + rows123Height + rowSpacingPx
+        val row4Bottom = row4Y + keyHeightPx
+
+        drawKey(
+            NUMPAD_KEY_ABC,
+            xCol1, row4Y, xCol2, row4Bottom,
+            fontSizeRatio = 0.34f,
+            customRadius = keyHeightPx * 0.45f
+        )
+
+        val commaWidth = col2Width * (0.9f / 2.0f)
+        drawKey(NUMPAD_KEY_COMMA, xCol2, row4Y, xCol2 + commaWidth, row4Bottom, fontSizeRatio = 0.48f)
+        drawKey(NUMPAD_KEY_SYMBOLS, xCol2 + commaWidth, row4Y, xCol3, row4Bottom, fontSizeRatio = 0.30f)
+
+        drawKey(NUMPAD_KEY_0, xCol3, row4Y, xCol4, row4Bottom, fontSizeRatio = 0.52f)
+
+        val equalsWidth = col4Width * (1.1f / 2.0f)
+        drawKey(NUMPAD_KEY_EQUALS, xCol4, row4Y, xCol4 + equalsWidth, row4Bottom, fontSizeRatio = 0.44f)
+        drawKey(NUMPAD_KEY_PERIOD, xCol4 + equalsWidth, row4Y, xCol5, row4Bottom, fontSizeRatio = 0.48f)
+
+        drawKey(
+            NUMPAD_KEY_ENTER,
+            xCol5, row4Y, w, row4Bottom,
+            customBgColor = 0xFFA8C7FA.toInt(),
+            customTextColor = 0xFF041E49.toInt(),
+            customRadius = keyHeightPx * 0.45f
+        )
+    }
+
+    fun updateLayout(layout: KeyLayout) {
+        keyLayout = layout
+        // Recompute effective layout with number row if enabled (skip for numpad and symbols)
+        effectiveLayout = if (layout.id == "numpad" || layout.id.startsWith("symbols")) {
+            layout
+        } else if (settings.numberRow) {
+            val numberRow = (1..10).map { i ->
+                val ch = if (i == 10) '0' else (i + 48).toChar()
+                Key(ch.toString(), ch.code)
+            }
+            KeyLayout(
+                layout.id + "_with_numbers",
+                listOf(numberRow) + layout.rows
+            )
+        } else {
+            layout
+        }
+        requestLayout()
+        invalidate()
+    }
+
+    fun updateDictionary(wordList: WordList, userDict: UserDictionary) {
+        this.wordList = wordList
+        this.userDict = userDict
+        glideDecoder = GlideDecoder(wordList, userDict)
+    }
+
+    private fun drawLamAlefPopup(canvas: Canvas, w: Float, h: Float) {
+        val density = resources.displayMetrics.density
+
+        // Dark translucent scrim
+        canvas.drawRect(0f, 0f, w, h, scrimPaint)
+
+        // Row 1: إ  لإ لأ ئ ؤ (with لا)
+        val row1 = listOf("إ", "لإ", "لأ", "ئ", "ؤ", "لا")
+        // Row 2: ! ? : ' * @ # $_ & -( )
+        val row2 = listOf("!", "?", ":", "'", "*", "@", "#", "$", "_", "&", "-", "(", ")")
+        // Row 3: . , ، . (with close ✕)
+        val row3 = listOf(".", ",", "،", ".", "✕")
+
+        val marginH = 8f * density
+        val cardW = w - (marginH * 2f)
+        val padH = 8f * density
+        val padV = 10f * density
+        val rowGap = 7f * density
+        val btnHeight1 = 44f * density
+        val btnHeight2 = 39f * density
+        val btnHeight3 = 44f * density
+
+        val totalContentHeight = (padV * 2f) + btnHeight1 + rowGap + btnHeight2 + rowGap + btnHeight3
+        val cardTop = (h - totalContentHeight - (10f * density)).coerceAtLeast(6f * density)
+        val cardBottom = cardTop + totalContentHeight
+        val cardLeft = marginH
+        val cardRight = w - marginH
+
+        lamAlefPopupCardRect.set(cardLeft, cardTop, cardRight, cardBottom)
+        lamAlefPopupButtons.clear()
+
+        // Card background
+        val cornerRadius = 14f * density
+        popupCardBorderPaint.color = theme.keyAccent
+        popupCardBorderPaint.alpha = 110
+        popupCardBorderPaint.strokeWidth = 1.5f * density
+        canvas.drawRoundRect(lamAlefPopupCardRect, cornerRadius, cornerRadius, popupCardBgPaint)
+        canvas.drawRoundRect(lamAlefPopupCardRect, cornerRadius, cornerRadius, popupCardBorderPaint)
+
+        val availW = cardW - (padH * 2f)
+        val btnRadius = 6f * density
+
+        popupNormalBtnPaint.color = theme.keyBackground
+        popupPressedBtnPaint.color = theme.keyAccent
+        popupBtnBorderPaint.strokeWidth = 1f * density
+
+        // Draw Row 1: 6 buttons
+        var curY = cardTop + padV
+        val gap1 = 6f * density
+        val btnW1 = (availW - (gap1 * 5f)) / 6f
+        var curX1 = cardLeft + padH
+        for (label in row1) {
+            val rect = RectF(curX1, curY, curX1 + btnW1, curY + btnHeight1)
+            lamAlefPopupButtons[label] = rect
+
+            val isPressed = pressedPopupButton == label
+            canvas.drawRoundRect(rect, btnRadius, btnRadius, if (isPressed) popupPressedBtnPaint else popupNormalBtnPaint)
+            canvas.drawRoundRect(rect, btnRadius, btnRadius, popupBtnBorderPaint)
+
+            popupTextPaint.textSize = 21f * density
+            popupTextPaint.color = if (isPressed) 0xFF000000.toInt() else if (label == "لا") theme.keyAccent else theme.keyText
+            val textY = rect.centerY() - ((popupTextPaint.ascent() + popupTextPaint.descent()) / 2f)
+            canvas.drawText(label, rect.centerX(), textY, popupTextPaint)
+
+            curX1 += btnW1 + gap1
+        }
+
+        // Draw Row 2: 13 buttons
+        curY += btnHeight1 + rowGap
+        val gap2 = 3.2f * density
+        val btnW2 = (availW - (gap2 * 12f)) / 13f
+        var curX2 = cardLeft + padH
+        for (label in row2) {
+            val rect = RectF(curX2, curY, curX2 + btnW2, curY + btnHeight2)
+            lamAlefPopupButtons[label] = rect
+
+            val isPressed = pressedPopupButton == label
+            canvas.drawRoundRect(rect, btnRadius, btnRadius, if (isPressed) popupPressedBtnPaint else popupNormalBtnPaint)
+            canvas.drawRoundRect(rect, btnRadius, btnRadius, popupBtnBorderPaint)
+
+            popupTextPaint.textSize = 17f * density
+            popupTextPaint.color = if (isPressed) 0xFF000000.toInt() else theme.keyText
+            val textY = rect.centerY() - ((popupTextPaint.ascent() + popupTextPaint.descent()) / 2f)
+            canvas.drawText(label, rect.centerX(), textY, popupTextPaint)
+
+            curX2 += btnW2 + gap2
+        }
+
+        // Draw Row 3: 5 buttons
+        curY += btnHeight2 + rowGap
+        val gap3 = 8f * density
+        val btnW3 = (availW - (gap3 * 4f)) / 5f
+        var curX3 = cardLeft + padH
+        for (label in row3) {
+            val rect = RectF(curX3, curY, curX3 + btnW3, curY + btnHeight3)
+            lamAlefPopupButtons[label] = rect
+
+            val isPressed = pressedPopupButton == label
+            val isClose = label == "✕"
+            val bgPaint = when {
+                isPressed -> popupPressedBtnPaint
+                isClose -> popupCloseBtnPaint
+                else -> popupNormalBtnPaint
+            }
+            canvas.drawRoundRect(rect, btnRadius, btnRadius, bgPaint)
+            canvas.drawRoundRect(rect, btnRadius, btnRadius, popupBtnBorderPaint)
+
+            popupTextPaint.textSize = if (isClose) 18f * density else 22f * density
+            popupTextPaint.color = if (isPressed) 0xFF000000.toInt() else if (isClose) 0xFFEF4444.toInt() else theme.keyText
+            val textY = rect.centerY() - ((popupTextPaint.ascent() + popupTextPaint.descent()) / 2f)
+            canvas.drawText(label, rect.centerX(), textY, popupTextPaint)
+
+            curX3 += btnW3 + gap3
+        }
+    }
+
+    private fun handleLamAlefPopupTouch(event: MotionEvent) {
+        val x = event.x
+        val y = event.y
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                pressedPopupButton = findLamAlefPopupButtonAt(x, y)
+                invalidate()
+            }
+            MotionEvent.ACTION_MOVE -> {
+                val current = findLamAlefPopupButtonAt(x, y)
+                if (current != pressedPopupButton) {
+                    pressedPopupButton = current
+                    invalidate()
+                }
+            }
+            MotionEvent.ACTION_UP -> {
+                val target = pressedPopupButton
+                pressedPopupButton = null
+                if (target != null) {
+                    if (target == "✕") {
+                        isLamAlefPopupVisible = false
+                    } else {
+                        onKeyListener?.invoke(target.first().code, target)
+                        isLamAlefPopupVisible = false
+                    }
+                } else if (!lamAlefPopupCardRect.contains(x, y)) {
+                    isLamAlefPopupVisible = false
+                }
+                invalidate()
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                pressedPopupButton = null
+                isLamAlefPopupVisible = false
+                invalidate()
+            }
+        }
+    }
+
+    private fun findLamAlefPopupButtonAt(x: Float, y: Float): String? {
+        for ((label, rect) in lamAlefPopupButtons) {
+            if (rect.contains(x, y)) {
+                return label
+            }
+        }
+        return null
+    }
+
+    fun cleanUp() {
+        stopDeleteRepeat()
+        longPressRunnable?.let { longPressHandler.removeCallbacks(it) }
+        longPressHandler.removeCallbacksAndMessages(null)
+        deleteRepeatHandler.removeCallbacksAndMessages(null)
+        ripples.clear()
+        glideTrail.clear()
+        glideSamples.clear()
+        isGliding = false
+        downKey = null
+        pointerKeys.clear()
+        pointerDownX.clear()
+        pointerDownY.clear()
+        isLamAlefPopupVisible = false
+    }
+
+    override fun onDetachedFromWindow() {
+        cleanUp()
+        super.onDetachedFromWindow()
+    }
+}
